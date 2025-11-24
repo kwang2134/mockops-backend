@@ -20,20 +20,48 @@ MockOps 프로젝트의 최상위 패키지는 `com.mockops.project`가 될 것�
 `domain`은 비즈니스 규칙이 모여있는 핵심 영역입니다. 각 엔티티(`User`, `Project` 등)별로 하위 패키지를 구성하여 모듈화합니다.
 
 ```java
-com.mockops.project.domain
-├── [entity_name] (예: user, project, domainserver)
-│   ├── User.java, Project.java (엔티티 클래스)
-│   ├── UserRepository.java, ProjectRepository.java (인터페이스만 정의)
-│   ├── UserService.java, ProjectService.java (도메인 서비스 로직)
-│   └── enum (도메인 고유 Enum: Role, MemberRole 등)
-├── mockapi
-│   ├── MockApi.java
-│   └── ...
-└── webhook
-    ├── WebhookSecret.java
-    └── ...
-```
+// 루트 패키지: com.mockops
 
+com.mockops.domain
+├── user              // 1. 사용자 및 인증 컨텍스트
+│   ├── entity
+│   │   ├── User.java
+│   │   └── AuthProvider.java
+│   ├── repository
+│   │   ├── UserRepository.java
+│   │   └── AuthProviderRepository.java
+│   ├── service
+│   │   └── UserService.java (로그인, 회원가입, 사용자 정보 관리)
+│   └── role            // 도메인 고유 Enum
+│       └── Role.java   // (User 역할: ADMIN, MEMBER 등)
+|
+├── project           // 2. 프로젝트 관리 컨텍스트
+│   ├── entity
+│   │   ├── Project.java
+│   │   ├── ProjectMember.java
+│   │   ├── Invitation.java
+│   │   └── ProjectCorsOrigin.java
+│   ├── repository
+│   │   ├── ProjectRepository.java
+│   │   └── ProjectMemberRepository.java
+│   ├── service
+│   │   └── ProjectService.java (생성, 수정, 초대, 멤버 관리 로직)
+│   └── role            // 도메인 고유 Enum
+│       └── MemberRole.java // (ProjectMember 역할: OWNER, MANAGER 등)
+|
+└── mock              // 3. Mock 서비스 및 라우팅 컨텍스트
+├── entity
+│   ├── DomainServer.java
+│   ├── MockApi.java
+│   └── WebhookSecret.java
+├── repository
+│   ├── MockApiRepository.java
+│   └── DomainServerRepository.java
+├── service
+│   └── MockService.java (Mock 데이터 처리, AntPathMatcher 로직)
+└── handler         // Custom HandlerMapping 관련 로직
+└── MockopsHandlerMapping.java
+```
 ---
 
 ### 3. 🌐 `api` (Presentation) 패키지 상세 구조
@@ -41,7 +69,7 @@ com.mockops.project.domain
 `api` 패키지는 클라이언트와 직접 통신하며, HTTP 요청을 처리하고 응답을 반환하는 역할을 합니다. DTO는 이 계층에서 정의하여 도메인 모델과의 의존성을 분리합니다.
 
 ```java
-com.mockops.project.api
+com.mockops.api
 ├── [entity_name] (예: user, project)
 │   ├── UserController.java, ProjectController.java (Controller)
 │   └── dto (외부 통신용 DTO 모음)
@@ -64,7 +92,7 @@ com.mockops.project.api
 `global`은 애플리케이션 전반에 걸쳐 사용되는 공통 기능과 설정을 관리합니다.
 
 ```java
-com.mockops.project.global
+com.mockops.global
 ├── exception (커스텀 예외 클래스 및 예외 처리 핸들러)
 │   ├── BusinessException.java
 │   └── GlobalExceptionHandler.java
@@ -83,7 +111,7 @@ com.mockops.project.global
 `infrastructure`는 `domain`에서 정의된 인터페이스의 **구현체**와 외부 시스템과의 연동을 담당합니다.
 
 ```java
-com.mockops.project.infrastructure
+com.mockops.infrastructure
 ├── persistence (DB 연동 구현체)
 │   ├── UserJpaRepository.java (Domain의 UserRepository 구현)
 │   └── project
