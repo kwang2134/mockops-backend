@@ -1,0 +1,53 @@
+package com.mockops.global.exception;
+
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+
+@Getter
+public enum ErrorCode {
+    // 시스템
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "유효하지 않은 요청입니다."),
+
+    // auth 관련
+    INVALID_PROVIDER(HttpStatus.BAD_REQUEST, "유효하지 않은 provider입니다."),
+
+    // 인증 관련
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"유효하지 않은 토큰입니다."),
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
+
+    // 유저 관련
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지 않는 유저입니다."),
+    DUPLICATE_AUTH_SOCIAL(HttpStatus.CONFLICT,"이미 연결된 소셜 로그인 플랫폼입니다."),
+    TOKEN_NOT_FOUND(HttpStatus.BAD_REQUEST,"존재하지 않는 토큰입니다."),
+    UNAUTHORIZED_USER(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다."),
+    PERMISSION_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
+
+    private final HttpStatus httpStatus;
+    private final String message;
+
+    ErrorCode(HttpStatus httpStatus, String message) {
+        this.httpStatus = httpStatus;
+        this.message = message;
+    }
+
+    public BusinessException serviceException() {
+        return new BusinessException(this, ErrorType.SERVICE);
+    }
+
+    public BusinessException serviceException(String detail) {
+        return new BusinessException(this, detail, ErrorType.SERVICE);
+    }
+
+    public BusinessException domainException() {
+        return new BusinessException(this, ErrorType.DOMAIN);
+    }
+
+    public BusinessException domainException(String detail) {
+        return new BusinessException(this, detail, ErrorType.DOMAIN);
+    }
+
+
+}
