@@ -20,9 +20,7 @@ MockOps 프로젝트의 최상위 패키지는 `com.mockops.project`가 될 것�
 `domain`은 비즈니스 규칙이 모여있는 핵심 영역입니다. 각 엔티티(`User`, `Project` 등)별로 하위 패키지를 구성하여 모듈화합니다.
 
 ```java
-// 루트 패키지: com.mockops
-
-com.mockops.domain
+예시) com.mockops.domain
 ├── user              // 1. 사용자 및 인증 컨텍스트
 │   ├── entity
 │   │   ├── User.java
@@ -69,7 +67,7 @@ com.mockops.domain
 `api` 패키지는 클라이언트와 직접 통신하며, HTTP 요청을 처리하고 응답을 반환하는 역할을 합니다. DTO는 이 계층에서 정의하여 도메인 모델과의 의존성을 분리합니다.
 
 ```java
-com.mockops.api
+예시) com.mockops.presentaion.api
 ├── [entity_name] (예: user, project)
 │   ├── UserController.java, ProjectController.java (Controller)
 │   └── dto (외부 통신용 DTO 모음)
@@ -92,7 +90,7 @@ com.mockops.api
 `global`은 애플리케이션 전반에 걸쳐 사용되는 공통 기능과 설정을 관리합니다.
 
 ```java
-com.mockops.global
+예시) com.mockops.global
 ├── exception (커스텀 예외 클래스 및 예외 처리 핸들러)
 │   ├── BusinessException.java
 │   └── GlobalExceptionHandler.java
@@ -111,7 +109,7 @@ com.mockops.global
 `infrastructure`는 `domain`에서 정의된 인터페이스의 **구현체**와 외부 시스템과의 연동을 담당합니다.
 
 ```java
-com.mockops.infrastructure
+예시) com.mockops.infrastructure
 ├── persistence (DB 연동 구현체)
 │   ├── UserJpaRepository.java (Domain의 UserRepository 구현)
 │   └── project
