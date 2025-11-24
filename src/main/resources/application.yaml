@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: MockOps-Backend
+  mail:
+    host: smtp.gmail.com # Google 기준
+    port: 587
+    username: your_email@gmail.com
+    # [중요] 일반 비밀번호 대신 Google/Naver 계정에서 발급받은 '앱 비밀번호'를 사용해야 합니다.
+    password: generated_app_password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
