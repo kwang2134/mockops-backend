@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: MockOps-Backend
+
+  # 활성 프로필 설정 (local 또는 prod)
+  profiles:
+    active: local
+
+  # JPA 공통 설정
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        default_batch_fetch_size: 100
+
+# 로깅 공통 설정
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+  level:
+    root: INFO
+    com.mockops: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# JWT 공통 설정 (토큰 만료 시간)
+jwt:
+  access-token-expiration: 1800000  # 30분 (milliseconds)
+  refresh-token-expiration: 1209600000  # 2주 (milliseconds)
