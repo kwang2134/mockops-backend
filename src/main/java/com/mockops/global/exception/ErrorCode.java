@@ -18,6 +18,13 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
 
+    // OAuth2 관련
+    OAUTH2_PROVIDER_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "지원하지 않는 OAuth2 Provider입니다."),
+    OAUTH2_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "OAuth2 인증에 실패했습니다."),
+    OAUTH2_USER_INFO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "OAuth2 사용자 정보를 가져오는데 실패했습니다."),
+    OAUTH2_TOKEN_EXCHANGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "OAuth2 토큰 교환에 실패했습니다."),
+    OAUTH2_PROVIDER_CONNECTION_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "OAuth2 Provider 연결에 실패했습니다."),
+
     // 유저 관련
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지 않는 유저입니다."),
     DUPLICATE_AUTH_SOCIAL(HttpStatus.CONFLICT,"이미 연결된 소셜 로그인 플랫폼입니다."),
