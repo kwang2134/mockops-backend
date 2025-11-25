@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload test coverage report
         uses: codecov/codecov-action@v4
-        if: always() && (github.ref == 'refs/heads/dev' || github.event.pull_request.base.ref == 'dev')
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/dev'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./build/reports/jacoco/test/jacocoTestReport.xml
