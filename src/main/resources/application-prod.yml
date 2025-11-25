@@ -1,5 +1,7 @@
 server:
   port: ${SERVER_PORT:8080}
+  ssl:
+    enabled: ${SSL_ENABLED:true}  # 프로덕션에서는 HTTPS 사용
 
 spring:
   # 데이터베이스 설정 (프로덕션 - 환경변수)
@@ -70,6 +72,11 @@ spring:
 # JWT Secret Key (프로덕션 - 환경변수)
 jwt:
   secret: ${JWT_SECRET}
+
+# OAuth2 리다이렉트 URL (프로덕션 - 환경변수)
+oauth2:
+  redirect-url: ${OAUTH2_REDIRECT_URL:https://mockops.com/oauth2/callback}
+  error-redirect-url: ${OAUTH2_ERROR_REDIRECT_URL:https://mockops.com/oauth2/error}
 
 # CORS 설정 (프로덕션 - 환경변수, 쉼표로 구분)
 cors:

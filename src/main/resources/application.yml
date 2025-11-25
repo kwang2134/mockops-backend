@@ -27,5 +27,10 @@ logging:
 
 # JWT 공통 설정 (토큰 만료 시간)
 jwt:
-  access-token-expiration: 1800000  # 30분 (milliseconds)
-  refresh-token-expiration: 1209600000  # 2주 (milliseconds)
+  access-token-expiration: 30m # 30분
+  refresh-token-expiration: 14d  # 2주
+
+# OAuth2 공통 설정
+oauth2:
+  redirect-url: http://localhost:3000/oauth2/callback
+  error-redirect-url: http://localhost:3000/oauth2/error
