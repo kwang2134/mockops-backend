@@ -1,10 +1,10 @@
-package com.mockops.presentaion.api.user;
+package com.mockops.presentation.api.user;
 
 import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.service.UserService;
 import com.mockops.global.common.UnifiedResponse;
-import com.mockops.presentaion.api.user.dto.UserDetailResponse;
-import com.mockops.presentaion.api.user.dto.UserUpdateNicknameRequest;
+import com.mockops.presentation.api.user.dto.UserDetailResponse;
+import com.mockops.presentation.api.user.dto.UserUpdateNicknameRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

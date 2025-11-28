@@ -10,14 +10,19 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "projects")
+@Table(
+    name = "projects",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"owner_id", "name"})
+    }
+)
 public class Project extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Column(length = 500)
@@ -26,7 +31,7 @@ public class Project extends BaseEntity {
     @Column(nullable = false, name = "owner_id")
     private Long ownerId;
 
-    @Column
+    @Column(length = 255)
     private String slackWebhookUrl;
 
     @Builder
@@ -34,6 +39,11 @@ public class Project extends BaseEntity {
         this.name = name;
         this.description = description;
         this.ownerId = ownerId;
+        this.slackWebhookUrl = slackWebhookUrl;
+    }
+
+    public void updateProjectInfo(String description, String slackWebhookUrl) {
+        this.description = description;
         this.slackWebhookUrl = slackWebhookUrl;
     }
 }

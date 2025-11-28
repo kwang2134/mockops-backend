@@ -1,4 +1,4 @@
-package com.mockops.presentaion.api.user.dto;
+package com.mockops.presentation.api.user.dto;
 
 import com.mockops.domain.user.entity.User;
 import lombok.AllArgsConstructor;

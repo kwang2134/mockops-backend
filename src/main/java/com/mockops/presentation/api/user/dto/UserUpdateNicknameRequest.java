@@ -1,4 +1,4 @@
-package com.mockops.presentaion.api.user.dto;
+package com.mockops.presentation.api.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

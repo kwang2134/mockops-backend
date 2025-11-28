@@ -1,10 +1,10 @@
-package com.mockops.presentaion.api.user;
+package com.mockops.presentation.api.user;
 
 import com.mockops.domain.user.service.AuthService;
 import com.mockops.global.common.UnifiedResponse;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.global.util.CookieUtils;
-import com.mockops.presentaion.api.user.dto.TokenResponse;
+import com.mockops.presentation.api.user.dto.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

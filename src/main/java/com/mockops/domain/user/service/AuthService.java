@@ -9,7 +9,7 @@ import com.mockops.domain.user.role.Role;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.global.security.JwtProvider;
 import com.mockops.global.util.CryptUtils;
-import com.mockops.presentaion.api.user.dto.TokenResponse;
+import com.mockops.presentation.api.user.dto.TokenResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

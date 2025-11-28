@@ -15,4 +15,5 @@ public class JwtProperties {
     private String secret;
     private Duration accessTokenExpiration;
     private Duration refreshTokenExpiration;
+    private Duration invitationTokenExpiration;
 }
