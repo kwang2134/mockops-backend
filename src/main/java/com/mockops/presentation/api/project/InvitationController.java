@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -32,13 +33,13 @@ public class InvitationController {
     public ResponseEntity<UnifiedResponse<InvitationCreateResponse>> createInvitation(
             @PathVariable Long projectId,
             @Valid @RequestBody InvitationCreateRequest request,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("팀원 초대 요청: projectId={}, email={}, userId={}",
-            projectId, request.email(), currentUserId);
+            projectId, request.email(), userId);
 
         InvitationCreateResponse response = invitationService.createInvitation(
-            projectId, request, currentUserId
+            projectId, request, userId
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -54,13 +55,13 @@ public class InvitationController {
             @PathVariable Long projectId,
             @RequestParam(required = false) InvitationStatus status,
             Pageable pageable,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("초대 목록 조회: projectId={}, status={}, userId={}",
-            projectId, status, currentUserId);
+            projectId, status, userId);
 
         PagedInvitationListResponse response = invitationService.getInvitations(
-            projectId, status, pageable, currentUserId
+            projectId, status, pageable, userId
         );
 
         return ResponseEntity.ok(UnifiedResponse.success(response));
@@ -74,12 +75,12 @@ public class InvitationController {
     public ResponseEntity<Void> cancelInvitation(
             @PathVariable Long projectId,
             @PathVariable Long invitationId,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("초대 취소 요청: projectId={}, invitationId={}, userId={}",
-            projectId, invitationId, currentUserId);
+            projectId, invitationId, userId);
 
-        invitationService.cancelInvitation(projectId, invitationId, currentUserId);
+        invitationService.cancelInvitation(projectId, invitationId, userId);
 
         return ResponseEntity.noContent().build();
     }
@@ -94,11 +95,11 @@ public class InvitationController {
     @GetMapping("/api/v1/invitations/accept")
     public ResponseEntity<UnifiedResponse<String>> acceptInvitation(
             @RequestParam String token,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
-        log.info("초대 수락 요청: userId={}", currentUserId);
+        log.info("초대 수락 요청: userId={}", userId);
 
-        invitationService.acceptInvitation(token, currentUserId);
+        invitationService.acceptInvitation(token, userId);
 
         return ResponseEntity.ok(
             UnifiedResponse.success("초대를 성공적으로 수락했습니다.")

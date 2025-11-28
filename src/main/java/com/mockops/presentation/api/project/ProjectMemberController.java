@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -36,10 +37,10 @@ public class ProjectMemberController {
     public ResponseEntity<UnifiedResponse<ProjectMemberResponse>> inviteMember(
             @PathVariable Long projectId,
             @Valid @RequestBody MemberInviteRequest request,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
-        log.info("팀원 초대 요청: projectId={}, email={}, currentUserId={}",
-                projectId, request.email(), currentUserId);
+        log.info("팀원 초대 요청: projectId={}, email={}, userId={}",
+                projectId, request.email(), userId);
 
         // 이메일로 사용자 조회
         User invitedUser = userService.getUserByEmail(request.email());
@@ -47,7 +48,7 @@ public class ProjectMemberController {
         // VIEWER 역할로 멤버 추가
         ProjectMemberResponse response = projectMemberService.inviteMemberWithDetails(
                 projectId,
-                currentUserId,
+                userId,
                 invitedUser.getId(),
                 MemberRole.VIEWER
         );
@@ -65,13 +66,13 @@ public class ProjectMemberController {
             @PathVariable Long projectId,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long cursorId,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("팀원 목록 조회: projectId={}, size={}, cursorId={}", projectId, size, cursorId);
 
         MemberListResponse response = projectMemberService.getMembersWithPagination(
                 projectId,
-                currentUserId,
+                userId,
                 cursorId,
                 size
         );
@@ -87,14 +88,14 @@ public class ProjectMemberController {
             @PathVariable Long projectId,
             @PathVariable Long memberId,
             @Valid @RequestBody MemberRoleUpdateRequest request,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("팀원 역할 변경 요청: projectId={}, memberId={}, newRole={}",
                 projectId, memberId, request.memberRole());
 
         ProjectMemberResponse response = projectMemberService.updateMemberRoleWithDetails(
                 memberId,
-                currentUserId,
+                userId,
                 request.memberRole()
         );
 
@@ -109,11 +110,11 @@ public class ProjectMemberController {
     public ResponseEntity<Void> removeMember(
             @PathVariable Long projectId,
             @PathVariable Long memberId,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("팀원 제외 요청: projectId={}, memberId={}", projectId, memberId);
 
-        projectMemberService.removeProjectMember(memberId, currentUserId);
+        projectMemberService.removeProjectMember(memberId, userId);
 
         return ResponseEntity.noContent().build();
     }

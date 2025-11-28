@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,13 +33,13 @@ public class ProjectCorsOriginController {
     public ResponseEntity<UnifiedResponse<CorsOriginResponse>> addCorsOrigin(
             @PathVariable Long projectId,
             @Valid @RequestBody CorsOriginRequest request,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("CORS Origin 추가 요청: projectId={}, originUrl={}", projectId, request.originUrl());
 
         CorsOriginResponse response = corsOriginService.addCorsOriginWithResponse(
                 projectId,
-                currentUserId,
+                userId,
                 request.originUrl()
         );
 
@@ -53,11 +54,11 @@ public class ProjectCorsOriginController {
     @GetMapping
     public ResponseEntity<UnifiedResponse<List<CorsOriginResponse>>> getCorsOrigins(
             @PathVariable Long projectId,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("CORS Origin 목록 조회: projectId={}", projectId);
 
-        List<CorsOriginResponse> response = corsOriginService.getCorsOriginsWithResponse(projectId, currentUserId);
+        List<CorsOriginResponse> response = corsOriginService.getCorsOriginsWithResponse(projectId, userId);
         return ResponseEntity.ok(UnifiedResponse.success(response));
     }
 
@@ -69,11 +70,11 @@ public class ProjectCorsOriginController {
     public ResponseEntity<Void> deleteCorsOrigin(
             @PathVariable Long projectId,
             @PathVariable Long corsId,
-            @RequestAttribute("userId") Long currentUserId
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("CORS Origin 삭제 요청: projectId={}, corsId={}", projectId, corsId);
 
-        corsOriginService.deleteCorsOrigin(corsId, currentUserId);
+        corsOriginService.deleteCorsOrigin(corsId, userId);
 
         return ResponseEntity.noContent().build();
     }
