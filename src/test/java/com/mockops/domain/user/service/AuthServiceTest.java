@@ -9,7 +9,7 @@ import com.mockops.domain.user.role.Role;
 import com.mockops.global.exception.BusinessException;
 import com.mockops.global.security.JwtProvider;
 import com.mockops.global.util.CryptUtils;
-import com.mockops.presentaion.api.user.dto.TokenResponse;
+import com.mockops.presentation.api.user.dto.TokenResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
