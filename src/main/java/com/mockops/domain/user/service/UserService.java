@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,10 @@ public class UserService {
                 .orElseThrow(() -> ErrorCode.USER_NOT_FOUND.domainException(
                         "해당하는 사용자가 존재하지 않습니다. email=" + email
                 ));
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
     @Transactional
