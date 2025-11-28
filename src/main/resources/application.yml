@@ -29,8 +29,25 @@ logging:
 jwt:
   access-token-expiration: 30m # 30분
   refresh-token-expiration: 14d  # 2주
+  invitation-token-expiration: 7d # 7일
 
 # OAuth2 공통 설정
 oauth2:
   redirect-url: http://localhost:3000/oauth2/callback
   error-redirect-url: http://localhost:3000/oauth2/error
+
+# Redis 공통 설정
+spring.data.redis:
+  host: localhost
+  port: 6379
+  password: # 로컬 환경에서는 비밀번호 없음 (빈 문자열)
+  timeout: 3000ms
+  lettuce:
+    pool:
+      max-active: 8
+      max-idle: 8
+      min-idle: 2
+
+# 애플리케이션 설정
+app:
+  frontend-url: http://localhost:3000

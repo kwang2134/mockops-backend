@@ -66,8 +66,30 @@ jwt:
   secret-key: test-secret-key-for-unit-tests-must-be-at-least-256-bits-long-for-HS256
   access-token-expiration: 30m
   refresh-token-expiration: 14d
+  invitation-token-expiration: 7d
 
 # OAuth2 테스트 설정
 oauth2:
   redirect-url: http://localhost:3000/oauth2/callback
   error-redirect-url: http://localhost:3000/oauth2/error
+
+# Redis 자동 설정 비활성화 (테스트 환경에서는 Mock 사용)
+spring.autoconfigure.exclude:
+  - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+# Mail 테스트 설정 (실제 발송 없음)
+spring.mail:
+  host: localhost
+  port: 25
+  username: test
+  password: test
+  properties:
+    mail:
+      smtp:
+        auth: false
+        starttls:
+          enable: false
+
+# 애플리케이션 설정
+app:
+  frontend-url: http://localhost:3000
