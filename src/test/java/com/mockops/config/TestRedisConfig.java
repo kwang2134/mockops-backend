@@ -1,11 +1,16 @@
 package com.mockops.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mockops.domain.mock.dto.MockCacheDto;
+import com.mockops.domain.mock.infrastructure.MockApiCachePort;
+import com.mockops.domain.mock.entity.HttpMethod;
 import com.mockops.domain.project.infrastructure.CorsOriginCachePort;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -41,5 +46,37 @@ public class TestRedisConfig {
                 return mockCache.contains(origin);
             }
         };
+    }
+
+    @Bean
+    @Primary
+    public MockApiCachePort testMockApiCachePort() {
+        return new MockApiCachePort() {
+            @Override
+            public void cacheMockApi(Long projectId, String serverName, HttpMethod httpMethod, String endpointPath, MockCacheDto cacheDto) {
+                // Mock implementation - do nothing
+            }
+
+            @Override
+            public Optional<MockCacheDto> getMockApiFromCache(Long projectId, String serverName, HttpMethod httpMethod, String endpointPath) {
+                return Optional.empty();
+            }
+
+            @Override
+            public void evictMockApi(Long projectId, String serverName, HttpMethod httpMethod, String endpointPath) {
+                // Mock implementation - do nothing
+            }
+
+            @Override
+            public void evictAllMockApisForServer(Long projectId, String serverName) {
+                // Mock implementation - do nothing
+            }
+        };
+    }
+
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }
