@@ -1,7 +1,5 @@
 package com.mockops.presentation.api.project;
 
-import com.mockops.domain.project.role.MemberRole;
-import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.domain.project.service.ProjectService;
 import com.mockops.global.common.UnifiedResponse;
 import com.mockops.presentation.api.project.dto.*;
@@ -24,29 +22,24 @@ import org.springframework.web.bind.annotation.*;
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final ProjectMemberService projectMemberService;
 
     /**
      * 프로젝트 생성
      * POST /api/v1/projects
      */
     @PostMapping
-    public ResponseEntity<UnifiedResponse<ProjectDetailResponse>> createProject(
+    public ResponseEntity<UnifiedResponse<ProjectCreateResponse>> createProject(
             @Valid @RequestBody ProjectCreateRequest request,
             @AuthenticationPrincipal Long userId
     ) {
         log.info("프로젝트 생성 요청: userId={}, name={}", userId, request.name());
 
-        // 프로젝트 생성
-        ProjectDetailResponse response = projectService.createProjectWithDetails(
+        ProjectCreateResponse response = projectService.createProject(
                 request.name(),
                 request.description(),
                 userId,
                 request.slackWebhookUrl()
         );
-
-        // 생성자를 OWNER로 자동 추가
-        projectMemberService.addProjectMember(response.id(), userId, MemberRole.OWNER);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(UnifiedResponse.success(response));
@@ -87,14 +80,14 @@ public class ProjectController {
      * PATCH /api/v1/projects/{projectId}
      */
     @PatchMapping("/{projectId}")
-    public ResponseEntity<UnifiedResponse<ProjectDetailResponse>> updateProject(
+    public ResponseEntity<UnifiedResponse<ProjectUpdateResponse>> updateProject(
             @PathVariable Long projectId,
             @Valid @RequestBody ProjectUpdateRequest request,
             @AuthenticationPrincipal Long userId
     ) {
         log.info("프로젝트 수정 요청: projectId={}, userId={}", projectId, userId);
 
-        ProjectDetailResponse response = projectService.updateProjectWithDetails(
+        ProjectUpdateResponse response = projectService.updateProjectWithDetails(
                 projectId,
                 userId,
                 request.description(),
