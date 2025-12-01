@@ -3,6 +3,7 @@ package com.mockops.domain.project.service;
 import com.mockops.domain.project.entity.Project;
 import com.mockops.domain.project.repository.ProjectRepository;
 import com.mockops.global.exception.BusinessException;
+import com.mockops.presentation.api.project.dto.ProjectCreateResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -148,13 +150,14 @@ class ProjectServiceTest {
         given(projectRepository.save(any(Project.class))).willReturn(project);
 
         // when
-        Project createdProject = projectService.createProject(name, description, ownerId, slackWebhookUrl);
+        ProjectCreateResponse response = projectService.createProject(name, description, ownerId, slackWebhookUrl);
 
         // then
-        assertThat(createdProject).isNotNull();
-        assertThat(createdProject.getName()).isEqualTo(name);
+        assertThat(response).isNotNull();
+        assertThat(response.getName()).isEqualTo(name);
         verify(projectRepository).existsByOwnerIdAndName(ownerId, name);
         verify(projectRepository).save(any(Project.class));
+        verify(projectMemberService).addProjectMember(any(), eq(ownerId), any());
     }
 
     @Test

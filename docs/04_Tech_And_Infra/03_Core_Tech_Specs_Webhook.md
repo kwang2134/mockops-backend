@@ -23,17 +23,19 @@ MockOps의 성능과 확장성을 위해 **고정된 주기의 벌크 스케줄�
 | **항목** | **요구사항** | **정책 및 구현 방안** |
 | --- | --- | --- |
 | **헬스 체크 주체** | **Spring `@Scheduled` 기반 다중 스케줄러** | **5분, 10분, 30분, 1시간** 간격으로 동작하는 고정된 `@Scheduled` 메서드를 각각 구현합니다. |
+| **활성화 제어** | **명시적 `isHealthCheckActive` 플래그 사용** | `DomainServer` 엔티티에 `isHealthCheckActive` 플래그를 두어 **URL 존재 유무와 관계없이** 스케줄러 작동 여부를 제어합니다. |
 | **기본 주기** | **10분** | 사용자가 주기를 설정하지 않을 경우의 기본값으로 `DomainServer` 엔티티에 저장됩니다. |
 | **오류 임계치** | **3회 연속 실패** | 연속된 3회 헬스 체크 실패 시 `DomainServer`의 `status`를 **`ERROR`**로 변경합니다. |
 
 ### B. Redis 기반 벌크 작업
 
-| **항목** | **요구사항** | **상세 구현 방안** |
-| --- | --- | --- |
-| **스케줄링 목록 저장소** | **Redis Set 또는 List** | 주기별 서버 ID 및 URL 리스트를 Redis에 저장하여 **분산 환경에서 일관성**을 유지하고 DB 부하를 제거합니다. |
-| **Redis Key 구조** | `scheduler:{interval}:servers` | 예: `scheduler:5m:servers`, `scheduler:1h:servers` |
-| **Redis Value 구조** | `DomainServerId`와 `healthCheckUrl`을 포함하는 JSON | 스케줄러가 **DB 접근 없이** 즉시 헬스 체크를 수행할 수 있도록 필요한 URL 정보를 함께 저장합니다. |
-| **데이터 동기화** | **Atomic Update** | `DomainServer`의 `healthCheckInterval`이 변경될 때, Redis의 기존 `interval` Set에서 정보를 **제거**하고 새로운 `interval` Set에 정보를 **추가**하는 작업을 원자적(Atomic)으로 수행합니다. |
+| **항목** | **요구사항** | **상세 구현 방안**                                                                                                                                    |
+| --- | --- |-------------------------------------------------------------------------------------------------------------------------------------------------|
+| **스케줄링 목록 저장소** | **Redis Set** | 주기별 서버 ID 및 URL 리스트를 Redis SET에 저장하여 분산 환경에서 일관성을 유지하고 DB 부하를 제거합니다                                                                             |
+| **Redis Key 구조** | `healthcheck:jobs:{interval}` | 예: `healthcheck:jobs:5m`, `healthcheck:jobs:10m`, `healthcheck:jobs:30m`, `healthcheck:jobs:1h`                                                  |
+| **Redis Value 구조** | `[DomainServerId]:[HealthCheckPath]` (문자열) | 스케줄러가 **DB 접근 없이** 즉시 헬스 체크를 수행할 수 있도록 필요한 URL 정보를 함께 저장합니다. 예: `"123:/api/health" `                                                                                   |
+| **데이터 TTL** | **TTL 미사용 (명시적 관리)** | TTL을 설정하지 않으며, `DomainServer` 설정 변경 시 서비스 로직(`HealthCheckService`)에서 `SADD`/`SREM` 명령을 통해 원자적으로(Atomic) 데이터를 직접 관리합니다. |
+| **데이터 동기화** | **Atomic Update(플래그 기반)** | `isHealthCheckActive`**가 true일 때만** 해당 주기의 Redis Set에 `SADD`로 추가합니다. 플래그가 **false로 변경되면** 기존 주기의 Redis Set에서 `SREM`으로 제거 작업을 수행합니다. |
 
 ---
 

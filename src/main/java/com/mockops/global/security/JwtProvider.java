@@ -177,4 +177,84 @@ public class JwtProvider {
             throw ErrorCode.INVALID_TOKEN.serviceException();
         }
     }
+
+    /**
+     * Webhook JWT 토큰 생성 (30일 유효, 프로젝트별 Secret Key 사용)
+     * @param projectId 프로젝트 ID
+     * @param secretKey 프로젝트별 Webhook Secret Key (복호화된 원본)
+     * @return JWT 토큰
+     */
+    public String generateWebhookToken(Long projectId, String secretKey) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getWebhookTokenExpiration().toMillis());
+
+        SecretKey webhookKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+        return Jwts.builder()
+                .subject(String.valueOf(projectId))
+                .claim("type", "webhook")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(webhookKey)
+                .compact();
+    }
+
+    /**
+     * Webhook JWT 토큰 검증 (프로젝트별 Secret Key 사용)
+     * @param token Webhook JWT 토큰
+     * @param secretKey 프로젝트별 Webhook Secret Key (복호화된 원본)
+     * @return 유효성 여부
+     */
+    public boolean validateWebhookToken(String token, String secretKey) {
+        try {
+            SecretKey webhookKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+            Claims claims = Jwts.parser()
+                    .verifyWith(webhookKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String tokenType = claims.get("type", String.class);
+            if (!"webhook".equals(tokenType)) {
+                log.error("Webhook 토큰이 아닙니다.");
+                throw ErrorCode.INVALID_TOKEN.serviceException();
+            }
+
+            return true;
+        } catch (ExpiredJwtException e) {
+            log.error("만료된 Webhook 토큰입니다.");
+            throw ErrorCode.EXPIRED_TOKEN.serviceException();
+        } catch (UnsupportedJwtException e) {
+            log.error("지원되지 않는 JWT 토큰입니다.");
+            throw ErrorCode.INVALID_TOKEN.serviceException();
+        } catch (MalformedJwtException e) {
+            log.error("잘못된 형식의 JWT 토큰입니다.");
+            throw ErrorCode.INVALID_TOKEN.serviceException();
+        } catch (JwtException e) {
+            log.error("Webhook JWT 검증에 실패했습니다.");
+            throw ErrorCode.INVALID_TOKEN.serviceException();
+        } catch (IllegalArgumentException e) {
+            log.error("JWT 토큰이 비어있습니다.");
+            throw ErrorCode.INVALID_TOKEN.serviceException();
+        }
+    }
+
+    /**
+     * Webhook JWT 토큰에서 프로젝트 ID 추출
+     * @param token Webhook JWT 토큰
+     * @param secretKey 프로젝트별 Webhook Secret Key (복호화된 원본)
+     * @return 프로젝트 ID
+     */
+    public Long getProjectIdFromWebhookToken(String token, String secretKey) {
+        SecretKey webhookKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+        Claims claims = Jwts.parser()
+                .verifyWith(webhookKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return Long.parseLong(claims.getSubject());
+    }
 }

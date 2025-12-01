@@ -12,7 +12,8 @@ public record ProjectDetailResponse(
         Long ownerId,
         String ownerNickname,
         String slackWebhookUrl,
-        Instant createdAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
     public static ProjectDetailResponse from(Project project, User owner) {
         return new ProjectDetailResponse(
@@ -22,7 +23,8 @@ public record ProjectDetailResponse(
                 project.getOwnerId(),
                 owner.getNickname(),
                 project.getSlackWebhookUrl(),
-                project.getCreatedAt()
+                project.getCreatedAt(),
+                project.getUpdatedAt()
         );
     }
 }

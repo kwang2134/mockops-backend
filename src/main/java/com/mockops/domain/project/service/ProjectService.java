@@ -8,9 +8,11 @@ import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.service.UserService;
 import com.mockops.global.exception.ErrorCode;
+import com.mockops.presentation.api.project.dto.ProjectCreateResponse;
 import com.mockops.presentation.api.project.dto.ProjectDetailResponse;
 import com.mockops.presentation.api.project.dto.ProjectPageResponse;
 import com.mockops.presentation.api.project.dto.ProjectResponse;
+import com.mockops.presentation.api.project.dto.ProjectUpdateResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -89,16 +91,6 @@ public class ProjectService {
     }
 
     /**
-     * 프로젝트 생성 - Response DTO 반환
-     */
-    @Transactional
-    public ProjectDetailResponse createProjectWithDetails(String name, String description, Long ownerId, String slackWebhookUrl) {
-        Project project = createProject(name, description, ownerId, slackWebhookUrl);
-        User owner = userService.getUserById(ownerId);
-        return ProjectDetailResponse.from(project, owner);
-    }
-
-    /**
      * 프로젝트 상세 조회 - Response DTO 반환
      * 권한: PROJECT_MEMBER 이상
      */
@@ -112,21 +104,24 @@ public class ProjectService {
     }
 
     /**
-     * 프로젝트 정보 수정 - Response DTO 반환
+     * 프로젝트 정보 수정 - ProjectUpdateResponse 반환
      * 권한: PROJECT_OWNER
      */
     @Transactional
-    public ProjectDetailResponse updateProjectWithDetails(Long projectId, Long currentUserId, String description, String slackWebhookUrl) {
+    public ProjectUpdateResponse updateProjectWithDetails(Long projectId, Long currentUserId, String description, String slackWebhookUrl) {
         // 권한 검증: 프로젝트 소유자만 수정 가능
         projectMemberService.validateOwner(projectId, currentUserId);
 
         Project project = updateProjectInfo(projectId, description, slackWebhookUrl);
-        User owner = userService.getUserById(project.getOwnerId());
-        return ProjectDetailResponse.from(project, owner);
+        return ProjectUpdateResponse.from(project);
     }
 
+    /**
+     * 프로젝트 생성 - ProjectCreateResponse 반환
+     * 생성자를 자동으로 OWNER로 추가
+     */
     @Transactional
-    public Project createProject(String name, String description, Long ownerId, String slackWebhookUrl) {
+    public ProjectCreateResponse createProject(String name, String description, Long ownerId, String slackWebhookUrl) {
         if (projectRepository.existsByOwnerIdAndName(ownerId, name)) {
             throw ErrorCode.PROJECT_NAME_DUPLICATED.domainException(
                     "이미 존재하는 프로젝트 이름입니다. ownerId=" + ownerId + ", name=" + name
@@ -140,7 +135,12 @@ public class ProjectService {
                 .slackWebhookUrl(slackWebhookUrl)
                 .build();
 
-        return projectRepository.save(project);
+        Project savedProject = projectRepository.save(project);
+
+        // 생성자를 OWNER로 자동 추가
+        projectMemberService.addProjectMember(savedProject.getId(), ownerId, MemberRole.OWNER);
+
+        return ProjectCreateResponse.from(savedProject);
     }
 
     @Transactional
