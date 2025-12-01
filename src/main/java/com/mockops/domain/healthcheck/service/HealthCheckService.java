@@ -1,0 +1,314 @@
+package com.mockops.domain.healthcheck.service;
+
+import com.mockops.domain.mock.entity.DomainServer;
+import com.mockops.domain.mock.entity.ServerStatus;
+import com.mockops.domain.mock.repository.DomainServerRepository;
+import com.mockops.domain.notification.service.SlackNotificationService;
+import com.mockops.infrastructure.cache.RedisHealthCheckCache;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 도메인 서버 헬스 체크 서비스
+ * 스케줄러에서 호출하여 서버 상태를 확인하고 업데이트
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class HealthCheckService {
+
+    private static final String FAILURE_COUNT_KEY_PREFIX = "healthcheck:failures:";
+    private static final int FAILURE_THRESHOLD = 3; // 3회 연속 실패 시 ERROR 상태로 전환
+
+    private final WebClient healthCheckWebClient;
+    private final DomainServerRepository domainServerRepository;
+    private final RedisHealthCheckCache redisHealthCheckCache;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final SlackNotificationService slackNotificationService;
+
+    /**
+     * 특정 주기의 모든 헬스 체크 수행 (벌크 처리)
+     *
+     * @param interval 헬스 체크 주기 (5m, 10m, 30m, 1h)
+     */
+    public void performBulkHealthCheck(String interval) {
+        log.info("헬스 체크 벌크 작업 시작: interval={}", interval);
+
+        Set<String> jobs = redisHealthCheckCache.getAllHealthCheckJobs(interval);
+
+        if (jobs.isEmpty()) {
+            log.debug("헬스 체크 대상 없음: interval={}", interval);
+            return;
+        }
+
+        log.info("헬스 체크 대상: interval={}, count={}", interval, jobs.size());
+
+        for (String job : jobs) {
+            try {
+                Long serverId = RedisHealthCheckCache.parseServerId(job);
+                String healthCheckPath = RedisHealthCheckCache.parseHealthCheckPath(job);
+
+                performHealthCheck(serverId, healthCheckPath);
+            } catch (Exception e) {
+                log.error("헬스 체크 처리 중 오류 발생: job={}, error={}", job, e.getMessage(), e);
+            }
+        }
+
+        log.info("헬스 체크 벌크 작업 완료: interval={}, processed={}", interval, jobs.size());
+    }
+
+    /**
+     * 개별 서버 헬스 체크 수행
+     *
+     * @param serverId 서버 ID
+     * @param healthCheckPath 헬스 체크 경로
+     */
+    @Transactional
+    public void performHealthCheck(Long serverId, String healthCheckPath) {
+        DomainServer server = domainServerRepository.findById(serverId).orElse(null);
+
+        if (server == null) {
+            log.warn("헬스 체크 대상 서버를 찾을 수 없음: serverId={}", serverId);
+            return;
+        }
+
+        // 헬스 체크 URL 구성
+        String fullUrl = constructHealthCheckUrl(server, healthCheckPath);
+
+        log.debug("헬스 체크 시작: serverId={}, url={}", serverId, fullUrl);
+
+        // WebClient로 HTTP GET 요청
+        boolean isHealthy = checkHealth(fullUrl);
+
+        // 결과에 따라 서버 상태 업데이트
+        updateServerStatus(server, isHealthy);
+
+        // lastCheckedAt 업데이트
+        server.updateLastCheckedAt();
+
+        log.info("헬스 체크 완료: serverId={}, url={}, isHealthy={}, status={}",
+                serverId, fullUrl, isHealthy, server.getStatus());
+    }
+
+    /**
+     * WebClient를 사용한 헬스 체크 수행
+     *
+     * @param url 헬스 체크 URL
+     * @return 헬스 체크 성공 여부
+     */
+    private boolean checkHealth(String url) {
+        try {
+            HttpStatusCode status = healthCheckWebClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .map(response -> response.getStatusCode())
+                    .timeout(Duration.ofSeconds(10))
+                    .onErrorResume(e -> {
+                        log.warn("헬스 체크 요청 실패: url={}, error={}", url, e.getMessage());
+                        return Mono.empty();
+                    })
+                    .block();
+
+            boolean isHealthy = status != null && status.is2xxSuccessful();
+            log.debug("헬스 체크 응답: url={}, status={}, isHealthy={}", url, status, isHealthy);
+
+            return isHealthy;
+        } catch (Exception e) {
+            log.error("헬스 체크 중 예외 발생: url={}, error={}", url, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 헬스 체크 결과에 따라 서버 상태 업데이트
+     *
+     * @param server 도메인 서버
+     * @param isHealthy 헬스 체크 성공 여부
+     */
+    private void updateServerStatus(DomainServer server, boolean isHealthy) {
+        ServerStatus previousStatus = server.getStatus();
+
+        if (isHealthy) {
+            // 헬스 체크 성공 시
+            handleHealthyServer(server, previousStatus);
+        } else {
+            // 헬스 체크 실패 시
+            handleUnhealthyServer(server, previousStatus);
+        }
+    }
+
+    /**
+     * 헬스 체크 성공 시 처리
+     */
+    private void handleHealthyServer(DomainServer server, ServerStatus previousStatus) {
+        // 실패 카운트 초기화
+        resetFailureCount(server.getId());
+
+        // ERROR 상태에서 DEPLOYED로 복구
+        if (previousStatus == ServerStatus.ERROR) {
+            server.updateStatus(ServerStatus.DEPLOYED);
+            log.info("서버 상태 복구: serverId={}, ERROR -> DEPLOYED", server.getId());
+
+            // Slack 알림 전송 (ERROR -> DEPLOYED)
+            slackNotificationService.sendStatusChangeNotification(server, previousStatus, ServerStatus.DEPLOYED);
+        }
+    }
+
+    /**
+     * 헬스 체크 실패 시 처리
+     */
+    private void handleUnhealthyServer(DomainServer server, ServerStatus previousStatus) {
+        // 실패 카운트 증가
+        int failureCount = incrementFailureCount(server.getId());
+
+        log.warn("헬스 체크 실패: serverId={}, failureCount={}/{}", server.getId(), failureCount, FAILURE_THRESHOLD);
+
+        // 3회 연속 실패 시 ERROR 상태로 전환
+        if (failureCount >= FAILURE_THRESHOLD && previousStatus == ServerStatus.DEPLOYED) {
+            server.updateStatus(ServerStatus.ERROR);
+            log.error("서버 상태 ERROR로 전환: serverId={}, DEPLOYED -> ERROR, failureCount={}",
+                    server.getId(), failureCount);
+
+            // Slack 알림 전송 (DEPLOYED -> ERROR)
+            slackNotificationService.sendStatusChangeNotification(server, previousStatus, ServerStatus.ERROR);
+        }
+    }
+
+    /**
+     * 서버의 연속 실패 카운트 증가
+     *
+     * @param serverId 서버 ID
+     * @return 현재 실패 카운트
+     */
+    private int incrementFailureCount(Long serverId) {
+        String key = FAILURE_COUNT_KEY_PREFIX + serverId;
+        Long count = redisTemplate.opsForValue().increment(key);
+
+        // TTL 설정 (1시간 후 자동 삭제)
+        redisTemplate.expire(key, 1, TimeUnit.HOURS);
+
+        return count != null ? count.intValue() : 0;
+    }
+
+    /**
+     * 서버의 연속 실패 카운트 초기화
+     *
+     * @param serverId 서버 ID
+     */
+    private void resetFailureCount(Long serverId) {
+        String key = FAILURE_COUNT_KEY_PREFIX + serverId;
+        redisTemplate.delete(key);
+    }
+
+    /**
+     * 헬스 체크 URL 구성
+     *
+     * @param server 도메인 서버
+     * @param healthCheckPath 헬스 체크 경로
+     * @return 완전한 헬스 체크 URL
+     */
+    private String constructHealthCheckUrl(DomainServer server, String healthCheckPath) {
+        String baseUrl = server.getHealthCheckUrl();
+
+        // healthCheckUrl이 이미 전체 URL인 경우 (http:// 또는 https://로 시작)
+        if (baseUrl != null && (baseUrl.startsWith("http://") || baseUrl.startsWith("https://"))) {
+            return baseUrl;
+        }
+
+        // healthCheckUrl이 도메인만 있는 경우
+        if (baseUrl != null && !baseUrl.isEmpty()) {
+            return "https://" + baseUrl + healthCheckPath;
+        }
+
+        // healthCheckUrl이 없는 경우 (오류)
+        log.error("헬스 체크 URL이 설정되지 않음: serverId={}", server.getId());
+        return "";
+    }
+
+    /**
+     * 서버를 헬스 체크 스케줄러에 등록
+     * isHealthCheckActive 플래그가 true이고 healthCheckUrl이 있을 때만 등록
+     *
+     * @param server 도메인 서버
+     */
+    public void registerHealthCheck(DomainServer server) {
+        // isHealthCheckActive 플래그가 false면 등록하지 않음
+        if (!server.getIsHealthCheckActive()) {
+            log.debug("헬스 체크가 비활성화되어 등록하지 않음: serverId={}", server.getId());
+            return;
+        }
+
+        if (server.getHealthCheckUrl() == null || server.getHealthCheckUrl().isEmpty()) {
+            log.warn("헬스 체크 URL이 없어 등록하지 않음: serverId={}", server.getId());
+            return;
+        }
+
+        String interval = server.getHealthCheckInterval();
+        String healthCheckPath = extractPath(server.getHealthCheckUrl());
+
+        redisHealthCheckCache.addHealthCheckJob(interval, server.getId(), healthCheckPath);
+
+        log.info("헬스 체크 등록: serverId={}, interval={}, path={}", server.getId(), interval, healthCheckPath);
+    }
+
+    /**
+     * 서버를 헬스 체크 스케줄러에서 제거
+     *
+     * @param server 도메인 서버
+     */
+    public void unregisterHealthCheck(DomainServer server) {
+        String interval = server.getHealthCheckInterval();
+        String healthCheckPath = extractPath(server.getHealthCheckUrl());
+
+        redisHealthCheckCache.removeHealthCheckJob(interval, server.getId(), healthCheckPath);
+
+        // 실패 카운트도 삭제
+        resetFailureCount(server.getId());
+
+        log.info("헬스 체크 제거: serverId={}, interval={}", server.getId(), interval);
+    }
+
+    /**
+     * URL에서 경로 추출
+     *
+     * @param url 전체 URL
+     * @return 경로 부분 (예: /api/health)
+     */
+    private String extractPath(String url) {
+        if (url == null || url.isEmpty()) {
+            return "/health"; // 기본값
+        }
+
+        // 이미 경로만 있는 경우
+        if (url.startsWith("/")) {
+            return url;
+        }
+
+        // 전체 URL인 경우 경로 추출
+        try {
+            String[] parts = url.split("//");
+            if (parts.length > 1) {
+                String remainder = parts[1];
+                int pathStart = remainder.indexOf("/");
+                if (pathStart >= 0) {
+                    return remainder.substring(pathStart);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("URL 경로 추출 실패: url={}", url);
+        }
+
+        return "/health"; // 기본값
+    }
+}
