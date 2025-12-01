@@ -16,4 +16,5 @@ public class JwtProperties {
     private Duration accessTokenExpiration;
     private Duration refreshTokenExpiration;
     private Duration invitationTokenExpiration;
+    private Duration webhookTokenExpiration;
 }
