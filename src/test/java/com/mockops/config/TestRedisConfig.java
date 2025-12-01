@@ -8,6 +8,7 @@ import com.mockops.domain.project.infrastructure.CorsOriginCachePort;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -78,5 +79,11 @@ public class TestRedisConfig {
     @Primary
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
+    }
+
+    @Bean
+    @Primary
+    public WebClient healthCheckWebClient() {
+        return WebClient.builder().build();
     }
 }

@@ -1,11 +1,14 @@
 package com.mockops.domain.user.repository;
 
+import com.mockops.config.TestJacksonConfig;
+import com.mockops.config.TestRedisConfig;
 import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.role.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Import({TestJacksonConfig.class, TestRedisConfig.class})
 @DisplayName("UserRepository 테스트")
 class UserRepositoryTest {
 
