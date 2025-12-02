@@ -89,9 +89,11 @@
 |                                  |             | `status`              | String                             | 수동으로 변경할 서버 상태                         |
 | **`DomainServerCreateResponse`** | 서버 생성 성공 응답 | `id`                  | Long                               | 생성된 서버 ID                              |
 |                                  |             | `name`                | String                             | 생성된 서버 이름                              |
+|                                  |             | `slug`                | String                             | 생성된 서버 slug (URL 경로용)                  |
 |                                  |             | `createdAt`           | Instant                            | 생성 일시                                  |
 | **`DomainServerUpdateResponse`** | 서버 수정 성공 응답 | `id`                  | Long                               | 수정된 서버 ID                              |
 |                                  |             | `name`                | String                             | 수정된 서버 이름                              |
+|                                  |             | `slug`                | String                             | 수정된 서버 slug (URL 경로용)                  |
 |                                  |             | `status`              | String                             | 수정된 서버 상태                              |
 |                                  |             | `healthCheckUrl`      | String                             | 수정된 헬스 체크 URL                          |
 |                                  |             | `healthCheckInterval` | String                             | 수정된 헬스 체크 주기                           |
@@ -99,6 +101,7 @@
 |                                  |             | `updatedAt`           | Instant                            | 최종 수정 일시                               |
 | **`DomainServerResponse`**       | 서버 상세 정보 응답 | `id`                  | Long                               | 서버 고유 ID                               |
 |                                  |             | `name`                | String                             | 서버 이름                                  |
+|                                  |             | `slug`                | String                             | 서버 slug (URL 경로용)                      |
 |                                  |             | `status`              | String                             | 현재 상태 (`MOCKING`/`DEPLOYED`/`ERROR` 등) |
 |                                  |             | `healthCheckUrl`      | String                             | 헬스 체크 URL                              |
 |                                  |             | `healthCheckInterval` | String                             | 헬스 체크 주기                               |
@@ -108,6 +111,7 @@
 |                                  |             | `updatedAt`           | Instant                            | 최종 수정 일시                               |
 | **`DomainServerSimpleResponse`** | 서버 목록 개별 응답 | `id`                  | Long                               | 서버 고유 ID                               |
 |                                  |             | `name`                | String                             | 서버 이름                                  |
+|                                  |             | `slug`                | String                             | 서버 slug (URL 경로용)                      |
 |                                  |             | `status`              | String                             | 현재 상태 (`MOCKING`/`DEPLOYED`/`ERROR` 등) |
 |                                  |             | `updatedAt`           | Instant                            | 최종 수정 일시                               |
 | **`DomainServerListResponse`**   | 서버 목록 응답    | `data`                | List<`DomainServerSimpleResponse`> | 페이지에 해당하는 서버 목록 리스트                    |
@@ -135,7 +139,7 @@
 |  |  | `name` | String | API 라벨/이름                                                                      |
 |  |  | `httpMethod` | String | HTTP 메서드                                                                       |
 |  |  | `endpointPath` | String | API 경로                                                                         |
-|  |  | `fullEndpointUrl` | String | 호출용 전체 API 경로 (`/mock/{projectId}/{serverSlug}/{endpointPath}` 를 조합하여 생성 후 반환) |
+|  |  | `fullEndpoint` | String | 호출용 전체 API 경로 (`/mock/{projectId}/{serverSlug}{endpointPath}` 를 조합하여 생성 후 반환) |
 |  |  | `statusCode` | Integer | HTTP 상태 코드                                                                     |
 |  |  | `isActive` | Boolean | 활성화 여부                                                                         |
 | **`MockApiCreateResponse`** | Mock API 생성 성공 응답 | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드**                                               |
