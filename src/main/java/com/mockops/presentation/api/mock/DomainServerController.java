@@ -2,6 +2,7 @@ package com.mockops.presentation.api.mock;
 
 import com.mockops.domain.mock.service.DomainServerService;
 import com.mockops.global.common.UnifiedResponse;
+import com.mockops.presentation.api.mock.docs.DomainServerDocs;
 import com.mockops.presentation.api.mock.dto.domainserver.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class DomainServerController {
+public class DomainServerController implements DomainServerDocs {
 
     private final DomainServerService domainServerService;
 
@@ -30,6 +31,7 @@ public class DomainServerController {
      * 프로젝트의 서버 목록 조회
      * GET /api/v1/projects/{projectId}/servers
      */
+    @Override
     @GetMapping("/projects/{projectId}/servers")
     public ResponseEntity<UnifiedResponse<Page<DomainServerResponse>>> getServersByProject(
         @PathVariable Long projectId,
@@ -49,6 +51,7 @@ public class DomainServerController {
      * 서버 상세 조회
      * GET /api/v1/servers/{serverId}
      */
+    @Override
     @GetMapping("/servers/{serverId}")
     public ResponseEntity<UnifiedResponse<DomainServerResponse>> getServer(
         @PathVariable Long serverId,
@@ -64,6 +67,7 @@ public class DomainServerController {
      * 서버 생성
      * POST /api/v1/projects/{projectId}/servers
      */
+    @Override
     @PostMapping("/projects/{projectId}/servers")
     public ResponseEntity<UnifiedResponse<DomainServerCreateResponse>> createServer(
         @PathVariable Long projectId,
@@ -89,6 +93,7 @@ public class DomainServerController {
      * 서버 정보 수정
      * PUT /api/v1/servers/{serverId}
      */
+    @Override
     @PutMapping("/servers/{serverId}")
     public ResponseEntity<UnifiedResponse<DomainServerUpdateResponse>> updateServer(
         @PathVariable Long serverId,
@@ -114,6 +119,7 @@ public class DomainServerController {
      * 서버 삭제
      * DELETE /api/v1/servers/{serverId}
      */
+    @Override
     @DeleteMapping("/servers/{serverId}")
     public ResponseEntity<Void> deleteServer(
         @PathVariable Long serverId,

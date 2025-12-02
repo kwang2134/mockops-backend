@@ -5,6 +5,7 @@ import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.service.UserService;
 import com.mockops.global.common.UnifiedResponse;
+import com.mockops.presentation.api.project.docs.ProjectMemberDocs;
 import com.mockops.presentation.api.project.dto.project.ProjectMemberResponse;
 import com.mockops.presentation.api.project.dto.projectmember.MemberInviteRequest;
 import com.mockops.presentation.api.project.dto.projectmember.MemberListResponse;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/projects/{projectId}/members")
 @RequiredArgsConstructor
-public class ProjectMemberController {
+public class ProjectMemberController implements ProjectMemberDocs {
 
     private final ProjectMemberService projectMemberService;
     private final UserService userService;
@@ -33,6 +34,7 @@ public class ProjectMemberController {
      * 팀원 초대/추가 (VIEWER 고정)
      * POST /api/v1/projects/{projectId}/members
      */
+    @Override
     @PostMapping
     public ResponseEntity<UnifiedResponse<ProjectMemberResponse>> inviteMember(
             @PathVariable Long projectId,
@@ -61,6 +63,7 @@ public class ProjectMemberController {
      * 프로젝트 팀원 목록 조회 (커서 기반 페이징)
      * GET /api/v1/projects/{projectId}/members?size=20&cursorId=123
      */
+    @Override
     @GetMapping
     public ResponseEntity<UnifiedResponse<MemberListResponse>> getMembers(
             @PathVariable Long projectId,
@@ -83,6 +86,7 @@ public class ProjectMemberController {
      * 팀원 역할 변경 (OWNER 제외)
      * PATCH /api/v1/projects/{projectId}/members/{memberId}/role
      */
+    @Override
     @PatchMapping("/{memberId}/role")
     public ResponseEntity<UnifiedResponse<ProjectMemberResponse>> updateMemberRole(
             @PathVariable Long projectId,
@@ -106,6 +110,7 @@ public class ProjectMemberController {
      * 팀원 제외 (OWNER 제외)
      * DELETE /api/v1/projects/{projectId}/members/{memberId}
      */
+    @Override
     @DeleteMapping("/{memberId}")
     public ResponseEntity<Void> removeMember(
             @PathVariable Long projectId,

@@ -2,6 +2,7 @@ package com.mockops.presentation.api.webhook;
 
 import com.mockops.domain.webhook.service.DeploymentEventService;
 import com.mockops.domain.webhook.service.WebhookAuthService;
+import com.mockops.presentation.api.webhook.docs.WebhookDocs;
 import com.mockops.presentation.api.webhook.dto.DeploymentEventRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/webhook")
 @RequiredArgsConstructor
-public class WebhookController {
+public class WebhookController implements WebhookDocs {
 
     private final WebhookAuthService webhookAuthService;
     private final DeploymentEventService deploymentEventService;
@@ -32,6 +33,7 @@ public class WebhookController {
      * @param request 배포 이벤트 정보
      * @return 202 Accepted (비동기 처리)
      */
+    @Override
     @PostMapping("/deploy/{projectId}")
     public ResponseEntity<Void> receiveDeploymentEvent(
             @PathVariable Long projectId,

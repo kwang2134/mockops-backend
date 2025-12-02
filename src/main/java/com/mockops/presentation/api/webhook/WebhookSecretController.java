@@ -4,6 +4,7 @@ import com.mockops.domain.webhook.service.WebhookSecretService;
 import com.mockops.global.common.UnifiedResponse;
 import com.mockops.global.security.JwtProperties;
 import com.mockops.global.security.JwtProvider;
+import com.mockops.presentation.api.webhook.docs.WebhookSecretDocs;
 import com.mockops.presentation.api.webhook.dto.WebhookSecretResponse;
 import com.mockops.presentation.api.webhook.dto.WebhookTokenIssueRequest;
 import com.mockops.presentation.api.webhook.dto.WebhookTokenResponse;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/projects/{projectId}/webhook")
 @RequiredArgsConstructor
-public class WebhookSecretController {
+public class WebhookSecretController implements WebhookSecretDocs {
 
     private final WebhookSecretService webhookSecretService;
     private final JwtProvider jwtProvider;
@@ -32,6 +33,7 @@ public class WebhookSecretController {
      * Secret Key 정보 조회 (키 값은 숨김)
      * GET /api/v1/projects/{projectId}/webhook/secret
      */
+    @Override
     @GetMapping("/secret")
     public ResponseEntity<UnifiedResponse<WebhookSecretResponse>> getSecretInfo(
             @PathVariable Long projectId,
@@ -48,6 +50,7 @@ public class WebhookSecretController {
      * Secret Key 재발급 (기존 키 즉시 폐기)
      * POST /api/v1/projects/{projectId}/webhook/reissue
      */
+    @Override
     @PostMapping("/reissue")
     public ResponseEntity<UnifiedResponse<WebhookSecretResponse>> reissueSecretKey(
             @PathVariable Long projectId,
@@ -64,6 +67,7 @@ public class WebhookSecretController {
      * Secret Key 비활성화 (isActive=false)
      * PATCH /api/v1/projects/{projectId}/webhook/deactivate
      */
+    @Override
     @PatchMapping("/deactivate")
     public ResponseEntity<UnifiedResponse<WebhookSecretResponse>> deactivateSecretKey(
             @PathVariable Long projectId,
@@ -80,6 +84,7 @@ public class WebhookSecretController {
      * 30일 유효 기간 Webhook JWT 발급
      * POST /api/v1/projects/{projectId}/webhook/token
      */
+    @Override
     @PostMapping("/token")
     public ResponseEntity<UnifiedResponse<WebhookTokenResponse>> issueWebhookToken(
             @PathVariable Long projectId,

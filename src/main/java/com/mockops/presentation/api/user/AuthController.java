@@ -4,6 +4,7 @@ import com.mockops.domain.user.service.AuthService;
 import com.mockops.global.common.UnifiedResponse;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.global.util.CookieUtils;
+import com.mockops.presentation.api.user.docs.AuthDocs;
 import com.mockops.presentation.api.user.dto.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements AuthDocs {
 
     private final AuthService authService;
     private final CookieUtils cookieUtils;
@@ -30,6 +31,7 @@ public class AuthController {
      * Access Token 갱신
      * Refresh Token은 HttpOnly Cookie로 전달받고, 새로운 RefreshToken도 Cookie로 응답
      */
+    @Override
     @GetMapping("/token/refresh")
     public ResponseEntity<UnifiedResponse<TokenResponse>> refreshToken(
             HttpServletRequest request,
@@ -49,6 +51,7 @@ public class AuthController {
      * 로그아웃
      * RefreshToken 쿠키를 삭제하고 DB의 RefreshToken도 무효화
      */
+    @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @AuthenticationPrincipal Long userId,
@@ -65,6 +68,7 @@ public class AuthController {
      * OAuth 로그인 시작 (Google, GitHub)
      * TODO: Spring Security OAuth2 Client 사용하여 리다이렉트 처리
      */
+    @Override
     @GetMapping("/{provider}/login")
     public ResponseEntity<Void> startOAuthLogin(@PathVariable String provider) {
         // Spring Security OAuth2가 자동으로 처리
