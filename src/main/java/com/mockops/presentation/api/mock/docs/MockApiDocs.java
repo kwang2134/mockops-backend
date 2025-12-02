@@ -94,7 +94,7 @@ public interface MockApiDocs {
             summary = "Mock API 생성",
             description = "서버에 새로운 Mock API를 생성합니다. " +
                     "HTTP 메서드, 엔드포인트 경로, 응답 본문, 상태 코드를 설정할 수 있습니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 생성할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 생성할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -135,7 +135,7 @@ public interface MockApiDocs {
             description = "OpenAPI(Swagger) 스펙 파일을 업로드하여 여러 Mock API를 일괄 생성합니다. " +
                     "JSON 또는 YAML 형식의 OpenAPI 3.0 스펙 파일을 지원합니다. " +
                     "파일에 정의된 각 경로(path)와 메서드에 대해 Mock API가 생성됩니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 업로드할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 업로드할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -176,7 +176,7 @@ public interface MockApiDocs {
             summary = "Mock API 수정",
             description = "Mock API의 정보를 수정합니다. " +
                     "HTTP 메서드, 엔드포인트 경로, 응답 본문, 상태 코드, 활성화 여부를 변경할 수 있습니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 수정할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 수정할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -216,7 +216,7 @@ public interface MockApiDocs {
             summary = "Mock API 삭제",
             description = "Mock API를 삭제합니다. " +
                     "삭제된 Mock API는 더 이상 호출할 수 없습니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 삭제할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 삭제할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -250,7 +250,7 @@ public interface MockApiDocs {
             description = "Mock API의 활성화 상태를 토글합니다. " +
                     "비활성화된 Mock API는 호출 시 404 Not Found를 반환합니다. " +
                     "활성화/비활성화를 빠르게 전환할 수 있어 테스트 시나리오 관리에 유용합니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 변경할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 변경할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(

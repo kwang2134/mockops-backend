@@ -2,6 +2,7 @@ package com.mockops.domain.project.service;
 
 import com.mockops.domain.project.entity.Project;
 import com.mockops.domain.project.repository.ProjectRepository;
+import com.mockops.domain.webhook.service.WebhookSecretService;
 import com.mockops.global.exception.BusinessException;
 import com.mockops.presentation.api.project.dto.project.ProjectCreateResponse;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +33,9 @@ class ProjectServiceTest {
 
     @Mock
     private ProjectMemberService projectMemberService;
+
+    @Mock
+    private WebhookSecretService webhookSecretService;
 
     @Mock
     private com.mockops.domain.user.service.UserService userService;

@@ -108,8 +108,8 @@ public class DomainServerService {
     @Transactional
     public DomainServer createServer(Long projectId, String name, String slug, String healthCheckUrl,
                                     String healthCheckInterval, Long currentUserId) {
-        // 권한 검증: MANAGER 이상만 생성 가능
-        projectMemberService.validateMemberPermission(projectId, currentUserId, MemberRole.MANAGER);
+        // 권한 검증: DEVELOPER 이상만 생성 가능
+        projectMemberService.validateMemberPermission(projectId, currentUserId, MemberRole.DEVELOPER);
 
         // slug 중복 확인 (projectId와 slug의 복합 유니크 제약)
         if (domainServerRepository.existsByProjectIdAndSlug(projectId, slug)) {
@@ -184,8 +184,8 @@ public class DomainServerService {
     public void deleteServer(Long serverId, Long currentUserId) {
         DomainServer server = getDomainServerById(serverId);
 
-        // 권한 검증: MANAGER 이상만 삭제 가능
-        projectMemberService.validateMemberPermission(server.getProjectId(), currentUserId, MemberRole.MANAGER);
+        // 권한 검증: DEVELOPER 이상만 삭제 가능
+        projectMemberService.validateMemberPermission(server.getProjectId(), currentUserId, MemberRole.DEVELOPER);
 
         // Redis에서 헬스 체크 작업 제거
         if (server.getIsHealthCheckActive()) {

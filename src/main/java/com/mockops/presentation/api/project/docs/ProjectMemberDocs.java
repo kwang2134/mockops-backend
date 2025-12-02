@@ -26,7 +26,7 @@ public interface ProjectMemberDocs {
             summary = "팀원 초대",
             description = "이메일을 통해 프로젝트에 새로운 팀원을 초대합니다. " +
                     "초대된 멤버는 자동으로 VIEWER 권한으로 등록됩니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 초대할 수 있습니다."
+                    "OWNER 또는 MANAGER 권한을 가진 멤버만 초대할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -103,7 +103,7 @@ public interface ProjectMemberDocs {
     @Operation(
             summary = "팀원 역할 변경",
             description = "프로젝트 팀원의 역할을 변경합니다. " +
-                    "OWNER 권한을 가진 멤버만 변경할 수 있으며, OWNER 역할은 변경할 수 없습니다."
+                    "MANAGER 이상의 권한을 가진 멤버만 변경할 수 있으며, OWNER 역할은 변경할 수 없습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -144,7 +144,7 @@ public interface ProjectMemberDocs {
     @Operation(
             summary = "팀원 제외",
             description = "프로젝트에서 팀원을 제외합니다. " +
-                    "OWNER 권한을 가진 멤버만 제외할 수 있으며, OWNER 자신은 제외할 수 없습니다."
+                    "MANAGER 이상의 권한을 가진 멤버만 제외할 수 있으며, OWNER 자신은 제외할 수 없습니다."
     )
     @ApiResponses({
             @ApiResponse(

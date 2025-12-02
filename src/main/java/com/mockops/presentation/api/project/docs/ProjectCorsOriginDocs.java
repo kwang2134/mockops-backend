@@ -25,7 +25,7 @@ public interface ProjectCorsOriginDocs {
             summary = "허용 Origin 추가",
             description = "프로젝트의 Mock API에서 허용할 CORS Origin을 추가합니다. " +
                     "Origin URL은 프로토콜을 포함한 전체 URL이어야 합니다 (예: https://example.com). " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 추가할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 추가할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -97,7 +97,7 @@ public interface ProjectCorsOriginDocs {
     @Operation(
             summary = "허용 Origin 삭제",
             description = "프로젝트의 CORS Origin을 삭제합니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 삭제할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 삭제할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
