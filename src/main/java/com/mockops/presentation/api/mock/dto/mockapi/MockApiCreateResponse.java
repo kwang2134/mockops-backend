@@ -14,17 +14,20 @@ public record MockApiCreateResponse(
         String name,
         HttpMethod httpMethod,
         String endpointPath,
+        String fullEndpoint,
         Integer statusCode,
         Boolean isActive,
         String responseBody,
         Instant createdAt
 ) {
-    public static MockApiCreateResponse from(MockApi mockApi) {
+    public static MockApiCreateResponse from(MockApi mockApi, Long projectId, String serverSlug) {
+        String fullEndpoint = "/mock/" + projectId + "/" + serverSlug + mockApi.getEndpointPath();
         return new MockApiCreateResponse(
                 mockApi.getId(),
                 mockApi.getName(),
                 mockApi.getHttpMethod(),
                 mockApi.getEndpointPath(),
+                fullEndpoint,
                 mockApi.getStatusCode(),
                 mockApi.getIsActive(),
                 mockApi.getResponseBody(),

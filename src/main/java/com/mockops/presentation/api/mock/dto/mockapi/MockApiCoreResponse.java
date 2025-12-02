@@ -12,15 +12,18 @@ public record MockApiCoreResponse(
         String name,
         HttpMethod httpMethod,
         String endpointPath,
+        String fullEndpoint,
         Integer statusCode,
         Boolean isActive
 ) {
-    public static MockApiCoreResponse from(MockApi mockApi) {
+    public static MockApiCoreResponse from(MockApi mockApi, Long projectId, String serverSlug) {
+        String fullEndpoint = "/mock/" + projectId + "/" + serverSlug + mockApi.getEndpointPath();
         return new MockApiCoreResponse(
                 mockApi.getId(),
                 mockApi.getName(),
                 mockApi.getHttpMethod(),
                 mockApi.getEndpointPath(),
+                fullEndpoint,
                 mockApi.getStatusCode(),
                 mockApi.getIsActive()
         );
