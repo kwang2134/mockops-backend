@@ -93,10 +93,10 @@
 
 ### 8. 🎯 Public/Infra 엔드포인트 (Mocking & WebHook 수신)
 
-| **#** | **HTTP Method** | **URL** | **설명** | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **1** | `POST` | `/api/webhook/deploy/{projectId}` | **CI/CD 배포 완료 WebHook 수신** | `WEBHOOK_JWT` | None | `DeploymentEventRequest` | 202 Accepted |
-| **2** | `*` | `/mock/{projectId}/{serverName}/**` | Mock API 요청 수신 | `CORS/Public` | None | Client Request | Mock API 응답 |
+| **#** | **HTTP Method** | **URL**                             | **설명** | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
+| --- | --- |-------------------------------------| --- | --- | --- | --- | --- |
+| **1** | `POST` | `/api/webhook/deploy/{projectId}`   | **CI/CD 배포 완료 WebHook 수신** | `WEBHOOK_JWT` | None | `DeploymentEventRequest` | 202 Accepted |
+| **2** | `*` | `/mock/{projectId}/{serverSlug}/**` | Mock API 요청 수신 | `CORS/Public` | None | Client Request | Mock API 응답 |
 
 ---
 
