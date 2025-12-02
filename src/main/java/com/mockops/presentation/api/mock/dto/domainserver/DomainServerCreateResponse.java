@@ -10,12 +10,14 @@ import java.time.Instant;
 public record DomainServerCreateResponse(
         Long id,
         String name,
+        String slug,
         Instant createdAt
 ) {
     public static DomainServerCreateResponse from(DomainServer domainServer) {
         return new DomainServerCreateResponse(
                 domainServer.getId(),
                 domainServer.getName(),
+                domainServer.getSlug(),
                 domainServer.getCreatedAt()
         );
     }

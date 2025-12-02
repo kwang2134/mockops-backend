@@ -50,6 +50,16 @@ public class DomainServerService {
     }
 
     /**
+     * 프로젝트 ID와 slug로 조회
+     */
+    public DomainServer getServerByProjectIdAndSlug(Long projectId, String slug) {
+        return domainServerRepository.findByProjectIdAndSlug(projectId, slug)
+            .orElseThrow(() -> ErrorCode.DOMAIN_SERVER_NOT_FOUND.domainException(
+                "존재하지 않는 도메인 서버입니다. projectId=" + projectId + ", slug=" + slug
+            ));
+    }
+
+    /**
      * 프로젝트의 서버 목록 조회 (페이징) - DTO 반환
      */
     public Page<DomainServerResponse> getServersByProjectWithResponse(Long projectId, Long currentUserId, Pageable pageable) {
@@ -86,9 +96,9 @@ public class DomainServerService {
      * 서버 생성 (MOCKING 상태로) - DomainServerCreateResponse 반환
      */
     @Transactional
-    public DomainServerCreateResponse createServerWithResponse(Long projectId, String name, String healthCheckUrl,
-                                                         String healthCheckInterval, Long currentUserId) {
-        DomainServer server = createServer(projectId, name, healthCheckUrl, healthCheckInterval, currentUserId);
+    public DomainServerCreateResponse createServerWithResponse(Long projectId, String name, String slug,
+                                                         String healthCheckUrl, String healthCheckInterval, Long currentUserId) {
+        DomainServer server = createServer(projectId, name, slug, healthCheckUrl, healthCheckInterval, currentUserId);
         return DomainServerCreateResponse.from(server);
     }
 
@@ -96,21 +106,22 @@ public class DomainServerService {
      * 서버 생성 (MOCKING 상태로) - 내부용
      */
     @Transactional
-    public DomainServer createServer(Long projectId, String name, String healthCheckUrl,
+    public DomainServer createServer(Long projectId, String name, String slug, String healthCheckUrl,
                                     String healthCheckInterval, Long currentUserId) {
         // 권한 검증: MANAGER 이상만 생성 가능
         projectMemberService.validateMemberPermission(projectId, currentUserId, MemberRole.MANAGER);
 
-        // 중복 확인
-        if (domainServerRepository.existsByProjectIdAndName(projectId, name)) {
+        // slug 중복 확인 (projectId와 slug의 복합 유니크 제약)
+        if (domainServerRepository.existsByProjectIdAndSlug(projectId, slug)) {
             throw ErrorCode.DOMAIN_SERVER_DUPLICATED.serviceException(
-                "이미 존재하는 서버 이름입니다. name=" + name
+                "이미 존재하는 서버 slug입니다. projectId=" + projectId + ", slug=" + slug
             );
         }
 
         DomainServer server = DomainServer.builder()
             .projectId(projectId)
             .name(name)
+            .slug(slug)
             .status(ServerStatus.MOCKING)
             .healthCheckUrl(healthCheckUrl)
             .healthCheckInterval(healthCheckInterval)

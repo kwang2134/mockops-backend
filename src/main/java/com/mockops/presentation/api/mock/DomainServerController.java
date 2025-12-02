@@ -74,12 +74,13 @@ public class DomainServerController implements DomainServerDocs {
         @Valid @RequestBody DomainServerCreateRequest request,
         @AuthenticationPrincipal Long userId
     ) {
-        log.info("서버 생성 요청: projectId={}, name={}, userId={}",
-            projectId, request.name(), userId);
+        log.info("서버 생성 요청: projectId={}, name={}, slug={}, userId={}",
+            projectId, request.name(), request.slug(), userId);
 
         DomainServerCreateResponse response = domainServerService.createServerWithResponse(
             projectId,
             request.name(),
+            request.slug(),
             request.healthCheckUrl(),
             request.healthCheckInterval(),
             userId

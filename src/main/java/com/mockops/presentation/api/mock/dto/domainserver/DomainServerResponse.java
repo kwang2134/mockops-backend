@@ -11,6 +11,7 @@ import java.time.Instant;
 public record DomainServerResponse(
         Long id,
         String name,
+        String slug,
         ServerStatus status,
         String healthCheckUrl,
         String healthCheckInterval,
@@ -23,6 +24,7 @@ public record DomainServerResponse(
         return new DomainServerResponse(
                 server.getId(),
                 server.getName(),
+                server.getSlug(),
                 server.getStatus(),
                 server.getHealthCheckUrl(),
                 server.getHealthCheckInterval(),
