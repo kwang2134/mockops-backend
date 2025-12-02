@@ -12,6 +12,11 @@ public record DomainServerCreateRequest(
         @Size(min = 1, max = 50, message = "서버 이름은 1자 이상 50자 이하여야 합니다.")
         String name,
 
+        @NotBlank(message = "서버 slug는 필수입니다.")
+        @Pattern(regexp = "^[a-z0-9-]+$", message = "slug는 영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.")
+        @Size(min = 1, max = 100, message = "slug는 1자 이상 100자 이하여야 합니다.")
+        String slug,
+
         @Size(max = 255, message = "헬스체크 URL은 255자 이하여야 합니다.")
         String healthCheckUrl,
 

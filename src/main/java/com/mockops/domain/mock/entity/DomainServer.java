@@ -12,7 +12,9 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "domain_servers")
+@Table(name = "domain_servers", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_project_slug", columnNames = {"project_id", "slug"})
+})
 public class DomainServer extends BaseEntity {
 
     @Id
@@ -24,6 +26,9 @@ public class DomainServer extends BaseEntity {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(nullable = false, length = 100)
+    private String slug;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -42,10 +47,11 @@ public class DomainServer extends BaseEntity {
     private Boolean isHealthCheckActive;
 
     @Builder
-    public DomainServer(Long projectId, String name, ServerStatus status, String healthCheckUrl,
+    public DomainServer(Long projectId, String name, String slug, ServerStatus status, String healthCheckUrl,
                        String healthCheckInterval, Boolean isHealthCheckActive) {
         this.projectId = projectId;
         this.name = name;
+        this.slug = slug;
         this.status = status != null ? status : ServerStatus.MOCKING;
         this.healthCheckUrl = healthCheckUrl;
         this.healthCheckInterval = healthCheckInterval != null ? healthCheckInterval : "10m";

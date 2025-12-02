@@ -11,6 +11,7 @@ import java.time.Instant;
 public record DomainServerSimpleResponse(
         Long id,
         String name,
+        String slug,
         ServerStatus status,
         Instant updatedAt
 ) {
@@ -18,6 +19,7 @@ public record DomainServerSimpleResponse(
         return new DomainServerSimpleResponse(
                 domainServer.getId(),
                 domainServer.getName(),
+                domainServer.getSlug(),
                 domainServer.getStatus(),
                 domainServer.getUpdatedAt()
         );

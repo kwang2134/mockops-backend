@@ -81,6 +81,7 @@
 | **DTO 클래스명**                     | **역할**      | **필드명**               | **타입**                             | **설명**                                 |
 |----------------------------------|-------------|-----------------------|------------------------------------|----------------------------------------|
 | **`DomainServerCreateRequest`**  | 서버 생성 요청    | `name`                | String                             | 서버 이름                                  |
+|                                  |             | `slug`                | String                             | mock 요청 URL에 사용될 값                     |
 | **`DomainServerUpdateRequest`**  | 서버 정보 수정 요청 | `name`                | String                             | 수정할 서버 이름                              |
 |                                  |             | `healthCheckUrl`      | String                             | 수정할 헬스 체크 URL (수동 입력)                  |
 |                                  |             | `healthCheckInterval` | String                             | 수정할 헬스 체크 주기 (기본 10분)                  |
@@ -102,7 +103,7 @@
 |                                  |             | `healthCheckUrl`      | String                             | 헬스 체크 URL                              |
 |                                  |             | `healthCheckInterval` | String                             | 헬스 체크 주기                               |
 |                                  |             | `lastCheckedAt`       | Instant                            | 최종 헬스 체크 일시                            |
-|                                  |             | `isHealthCheckActive` | Boolean                             | 헬스 체크 활성화 여부                        |
+|                                  |             | `isHealthCheckActive` | Boolean                             | 헬스 체크 활성화 여부                           |
 |                                  |             | `createdAt`           | Instant                            | 생성 일시                                  |
 |                                  |             | `updatedAt`           | Instant                            | 최종 수정 일시                               |
 | **`DomainServerSimpleResponse`** | 서버 목록 개별 응답 | `id`                  | Long                               | 서버 고유 ID                               |
@@ -118,43 +119,44 @@
 
 ### 6. 🖼️ Mock API 관리 DTO
 
-| **DTO 클래스명** | **역할** | **필드명** | **타입** | **설명** |
-| --- | --- | --- | --- | --- |
-| **`MockApiCreateRequest`** | Mock API 생성 요청 | `name` | String | API 라벨/이름 (선택 사항) |
-|  |  | `httpMethod` | String | HTTP 메서드 |
-|  |  | `endpointPath` | String | API 경로 |
-|  |  | `responseBody` | String | 응답 JSON/TEXT |
-|  |  | `statusCode` | Integer | HTTP 상태 코드 |
-| **`MockApiUpdateRequest`** | Mock API 수정 요청 | `name` | String | API 라벨/이름 (선택 사항) |
-|  |  | `httpMethod` | String | HTTP 메서드 |
-|  |  | `responseBody` | String | 응답 JSON/TEXT |
-|  |  | `statusCode` | Integer | HTTP 상태 코드 |
-|  |  | `isActive` | Boolean | 활성화 여부 |
-| **`MockApiCoreResponse`** | **[Base DTO] Mock API 핵심 정보** | `id` | Long | Mock API 고유 ID |
-|  |  | `name` | String | API 라벨/이름 |
-|  |  | `httpMethod` | String | HTTP 메서드 |
-|  |  | `endpointPath` | String | API 경로 |
-|  |  | `statusCode` | Integer | HTTP 상태 코드 |
-|  |  | `isActive` | Boolean | 활성화 여부 |
-| **`MockApiCreateResponse`** | Mock API 생성 성공 응답 | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드** |
-|  |  | `responseBody` | String | 응답 JSON/TEXT |
-|  |  | `createdAt` | Instant | 생성 일시 |
-| **`MockApiUpdateResponse`** | Mock API 수정 성공 응답 | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드** |
-|  |  | `responseBody` | String | 응답 JSON/TEXT |
-|  |  | `updatedAt` | Instant | 최종 수정 일시 |
-| **`MockApiDetailResponse`** | Mock API 상세 정보 응답 | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드** |
-|  |  | `responseBody` | String | 응답 본문 |
-|  |  | `createdAt` | Instant | 생성 일시 |
-|  |  | `updatedAt` | Instant | 최종 수정 일시 |
-| **`MockApiResponse`** | Mock API 정보 목록 응답 (response body 제외) | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드** |
-|  |  | `updatedAt` | Instant | 최종 수정 일시 |
-| **`MockApiGroupDto`** | Mock API 목록 그룹 dto | `groupName` | String | 그룹핑 이름 (예: User, Product) |
-|  |  | `mocks` | List<`MockApiResponse`> | 해당 그룹에 속한 개별 Mock API의 핵심 정보 리스트 |
-| **`MockApiListResponse`** | Mock API 목록 응답 | `mocks` | List<`MockApiGroupDto`> | 그룹핑된 Mock API 목록 |
-|  |  | `nextCursorId` | Long | 다음 페이지를 요청할 때 사용해야 할 커서 ID |
-|  |  | `hasNext` | Boolean | 다음 페이지(그룹)가 존재하는지 여부 |
-| **`MockApiBulkResponse`** | YAML 일괄 처리 응답 | `processedCount` | Integer | 처리된 Mock API 건수 |
-|  |  | `errors` | List<String> | 처리 중 발생한 오류 목록 |
+| **DTO 클래스명** | **역할** | **필드명** | **타입** | **설명**                                                                         |
+| --- | --- | --- | --- |--------------------------------------------------------------------------------|
+| **`MockApiCreateRequest`** | Mock API 생성 요청 | `name` | String | API 라벨/이름 (선택 사항)                                                              |
+|  |  | `httpMethod` | String | HTTP 메서드                                                                       |
+|  |  | `endpointPath` | String | API 경로                                                                         |
+|  |  | `responseBody` | String | 응답 JSON/TEXT                                                                   |
+|  |  | `statusCode` | Integer | HTTP 상태 코드                                                                     |
+| **`MockApiUpdateRequest`** | Mock API 수정 요청 | `name` | String | API 라벨/이름 (선택 사항)                                                              |
+|  |  | `httpMethod` | String | HTTP 메서드                                                                       |
+|  |  | `responseBody` | String | 응답 JSON/TEXT                                                                   |
+|  |  | `statusCode` | Integer | HTTP 상태 코드                                                                     |
+|  |  | `isActive` | Boolean | 활성화 여부                                                                         |
+| **`MockApiCoreResponse`** | **[Base DTO] Mock API 핵심 정보** | `id` | Long | Mock API 고유 ID                                                                 |
+|  |  | `name` | String | API 라벨/이름                                                                      |
+|  |  | `httpMethod` | String | HTTP 메서드                                                                       |
+|  |  | `endpointPath` | String | API 경로                                                                         |
+|  |  | `fullEndpointUrl` | String | 호출용 전체 API 경로 (`/mock/{projectId}/{serverSlug}/{endpointPath}` 를 조합하여 생성 후 반환) |
+|  |  | `statusCode` | Integer | HTTP 상태 코드                                                                     |
+|  |  | `isActive` | Boolean | 활성화 여부                                                                         |
+| **`MockApiCreateResponse`** | Mock API 생성 성공 응답 | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드**                                               |
+|  |  | `responseBody` | String | 응답 JSON/TEXT                                                                   |
+|  |  | `createdAt` | Instant | 생성 일시                                                                          |
+| **`MockApiUpdateResponse`** | Mock API 수정 성공 응답 | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드**                                               |
+|  |  | `responseBody` | String | 응답 JSON/TEXT                                                                   |
+|  |  | `updatedAt` | Instant | 최종 수정 일시                                                                       |
+| **`MockApiDetailResponse`** | Mock API 상세 정보 응답 | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드**                                               |
+|  |  | `responseBody` | String | 응답 본문                                                                          |
+|  |  | `createdAt` | Instant | 생성 일시                                                                          |
+|  |  | `updatedAt` | Instant | 최종 수정 일시                                                                       |
+| **`MockApiResponse`** | Mock API 정보 목록 응답 (response body 제외) | **`MockApiCoreResponse`** | **(임베드)** | **`MockApiCoreResponse`의 모든 필드**                                               |
+|  |  | `updatedAt` | Instant | 최종 수정 일시                                                                       |
+| **`MockApiGroupDto`** | Mock API 목록 그룹 dto | `groupName` | String | 그룹핑 이름 (예: User, Product)                                                      |
+|  |  | `mocks` | List<`MockApiResponse`> | 해당 그룹에 속한 개별 Mock API의 핵심 정보 리스트                                               |
+| **`MockApiListResponse`** | Mock API 목록 응답 | `mocks` | List<`MockApiGroupDto`> | 그룹핑된 Mock API 목록                                                               |
+|  |  | `nextCursorId` | Long | 다음 페이지를 요청할 때 사용해야 할 커서 ID                                                     |
+|  |  | `hasNext` | Boolean | 다음 페이지(그룹)가 존재하는지 여부                                                           |
+| **`MockApiBulkResponse`** | YAML 일괄 처리 응답 | `processedCount` | Integer | 처리된 Mock API 건수                                                                |
+|  |  | `errors` | List<String> | 처리 중 발생한 오류 목록                                                                 |
 
 ---
 

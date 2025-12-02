@@ -41,7 +41,8 @@ public class MockApiService {
      */
     public MockApiDetailResponse getMockApiByIdWithResponse(Long mockApiId, Long currentUserId) {
         MockApi mockApi = getMockApiById(mockApiId, currentUserId);
-        return MockApiDetailResponse.from(mockApi);
+        DomainServer server = domainServerService.getDomainServerById(mockApi.getServerId());
+        return MockApiDetailResponse.from(mockApi, server.getProjectId(), server.getSlug());
     }
 
     /**
@@ -67,13 +68,18 @@ public class MockApiService {
         // size + 1 개를 조회하여 hasNext 판단
         List<MockApi> mockApis = getMockApisByServer(serverId, cursorId, size + 1, currentUserId);
 
+        // DomainServer 정보 조회 (fullEndpoint 생성을 위해)
+        DomainServer server = domainServerService.getDomainServerById(serverId);
+        Long projectId = server.getProjectId();
+        String serverSlug = server.getSlug();
+
         // hasNext 판단
         boolean hasNext = mockApis.size() > size;
         List<MockApi> actualMockApis = hasNext ? mockApis.subList(0, size) : mockApis;
 
         // name으로 그룹핑
         var groupedByName = actualMockApis.stream()
-            .map(MockApiResponse::from)
+            .map(mockApi -> MockApiResponse.from(mockApi, projectId, serverSlug))
             .collect(java.util.stream.Collectors.groupingBy(
                 MockApiResponse::name,
                 java.util.LinkedHashMap::new,
@@ -118,7 +124,8 @@ public class MockApiService {
                                                            String endpointPath, String responseBody,
                                                            Integer statusCode, Boolean isActive, Long currentUserId) {
         MockApi mockApi = createMockApi(serverId, name, httpMethod, endpointPath, responseBody, statusCode, isActive, currentUserId);
-        return MockApiCreateResponse.from(mockApi);
+        DomainServer server = domainServerService.getDomainServerById(mockApi.getServerId());
+        return MockApiCreateResponse.from(mockApi, server.getProjectId(), server.getSlug());
     }
 
     /**
@@ -196,7 +203,8 @@ public class MockApiService {
                                                      String endpointPath, String responseBody,
                                                      Integer statusCode, Boolean isActive, Long currentUserId) {
         MockApi mockApi = updateMockApi(mockApiId, name, httpMethod, endpointPath, responseBody, statusCode, isActive, currentUserId);
-        return MockApiUpdateResponse.from(mockApi);
+        DomainServer server = domainServerService.getDomainServerById(mockApi.getServerId());
+        return MockApiUpdateResponse.from(mockApi, server.getProjectId(), server.getSlug());
     }
 
     /**
@@ -286,7 +294,8 @@ public class MockApiService {
     @Transactional
     public MockApiResponse toggleMockApiStatusWithResponse(Long mockApiId, Long currentUserId) {
         MockApi mockApi = toggleMockApiStatus(mockApiId, currentUserId);
-        return MockApiResponse.from(mockApi);
+        DomainServer server = domainServerService.getDomainServerById(mockApi.getServerId());
+        return MockApiResponse.from(mockApi, server.getProjectId(), server.getSlug());
     }
 
     /**
@@ -326,6 +335,7 @@ public class MockApiService {
      * @param currentUserId 현재 사용자 ID
      * @return HTTP 202 Accepted 응답 (jobId 포함)
      */
+    @Transactional
     public MockApiBulkResponse createMockApisFromFile(Long serverId, MultipartFile file, Long currentUserId) {
         // 권한 검증: DEVELOPER 이상만 생성 가능
         DomainServer server = domainServerService.getDomainServerById(serverId);

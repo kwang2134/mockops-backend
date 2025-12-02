@@ -23,6 +23,13 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
 
+    // Swagger Path
+    private final String[] SWAGGER_PATHS = {
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/docs/**",
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -42,6 +49,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/webhook/**").permitAll()
                         // Public 초대 수락 엔드포인트
                         .requestMatchers("/public/**").permitAll()
+                        // Swagger 엔드포인트
+                        .requestMatchers(SWAGGER_PATHS).permitAll()
+                        // test용 JWT 발급
+                        .requestMatchers("/api/v1/test/**").permitAll()
                         // 나머지는 모두 인증 필요
                         .anyRequest().authenticated()
                 )

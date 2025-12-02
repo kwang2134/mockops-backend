@@ -17,23 +17,24 @@
 
 ### 2. 필드 및 속성 정의
 
-| **필드명** | **자바 타입** | **DB 타입**      | **설명** | **제약 조건 및 JPA 매핑**                                          |
-| --- | --- |----------------| --- |-------------------------------------------------------------|
-| **`id`** | `Long` | `BIGINT`       | PK (고유 식별자) | `@Id`, `@GeneratedValue(strategy = IDENTITY)`               |
-| **`projectId`** | `Long` | `BIGINT`       | **소속 프로젝트(`Project`)의 ID** (FK 역할) | `@Column(nullable = false, name = "project_id")`            |
-| **`name`** | `String` | `VARCHAR(100)` | 도메인 서버 이름 (예: `user-service`) | `@Column(nullable = false)`                                 |
-| **`status`** | `ServerStatus` (Enum) | `VARCHAR`      | 현재 개발/운영 상태 | `@Enumerated(EnumType.STRING)`, `@Column(nullable = false)` |
-| **`healthCheckUrl`** | `String` | `VARCHAR(255)` | 실제 서버의 헬스 체크 API URL | `@Column(nullable = true)`                                  |
-| **`healthCheckInterval`** | `String`  | `VARCHAR(3)`   | 실제 서버의 헬스 체크 주기 | `@Column(nullable = false, length = 3, DEFAULT '10m'")`     |
-| **`lastCheckedAt`** | `Instant` | `TIMESTAMP`    | 헬스 체크가 마지막으로 수행된 일시 | `@Column(nullable = true)`                                  |
-| **`isHealthCheckActive`** | `Boolean` | `BOOLEAN`      | 헬스 체크 기능 활성화 여부 (true/false) | `@Column(nullable = false)`                                 |
+| **필드명**                   | **자바 타입** | **DB 타입**      | **설명**                                   | **제약 조건 및 JPA 매핑**                                          |
+|---------------------------| --- |----------------|------------------------------------------|-------------------------------------------------------------|
+| **`id`**                  | `Long` | `BIGINT`       | PK (고유 식별자)                              | `@Id`, `@GeneratedValue(strategy = IDENTITY)`               |
+| **`projectId`**           | `Long` | `BIGINT`       | **소속 프로젝트(`Project`)의 ID** (FK 역할)       | `@Column(nullable = false, name = "project_id")`            |
+| **`name`**                | `String` | `VARCHAR(100)` | 도메인 서버 이름 (한글, 띄어쓰기, 특수문자 허용)            | `@Column(nullable = false)`                                 |
+| **`slug`**                | `String` | `VARCHAR(100)` | 실제 URL 경로에 사용될 값(영어 소문자, 숫자, 하이픈(-)만 허용) | `@Column(nullable = false)`                  |
+| **`status`**              | `ServerStatus` (Enum) | `VARCHAR`      | 현재 개발/운영 상태                              | `@Enumerated(EnumType.STRING)`, `@Column(nullable = false)` |
+| **`healthCheckUrl`**      | `String` | `VARCHAR(255)` | 실제 서버의 헬스 체크 API URL                     | `@Column(nullable = true)`                                  |
+| **`healthCheckInterval`** | `String`  | `VARCHAR(3)`   | 실제 서버의 헬스 체크 주기                          | `@Column(nullable = false, length = 3, DEFAULT '10m'")`     |
+| **`lastCheckedAt`**       | `Instant` | `TIMESTAMP`    | 헬스 체크가 마지막으로 수행된 일시                      | `@Column(nullable = true)`                                  |
+| **`isHealthCheckActive`** | `Boolean` | `BOOLEAN`      | 헬스 체크 기능 활성화 여부 (true/false)             | `@Column(nullable = false)`                                 |
 
 ---
 
 ### 3. 생성자 및 빌더 패턴 상세
 
 - **기본 생성자:** `@NoArgsConstructor(access = PROTECTED)` 사용.
-- **빌더 패턴:** 빌더 인자는 `id`, `createdAt`, `updatedAt`, `lastCheckedAt` 필드를 제외한 **`projectId`, `name`, `status`, `healthCheckUrl`, `isHealthCheckActive`*을 포함합니다.
+- **빌더 패턴:** 빌더 인자는 `id`, `createdAt`, `updatedAt`, `lastCheckedAt` 필드를 제외한 **`projectId`, `name`, `slug`, `status`, `healthCheckUrl`, `isHealthCheckActive`*을 포함합니다.
 
 ---
 

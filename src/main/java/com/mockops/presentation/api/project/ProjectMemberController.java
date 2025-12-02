@@ -33,6 +33,7 @@ public class ProjectMemberController implements ProjectMemberDocs {
     /**
      * 팀원 초대/추가 (VIEWER 고정)
      * POST /api/v1/projects/{projectId}/members
+     * 웹 서비스 알림 구현 후 초대 기능 (메일 발송 x)
      */
     @Override
     @PostMapping

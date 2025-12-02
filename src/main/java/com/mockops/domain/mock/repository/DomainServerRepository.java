@@ -29,4 +29,14 @@ public interface DomainServerRepository extends JpaRepository<DomainServer, Long
      * 프로젝트 ID와 서버 이름 존재 여부 확인
      */
     boolean existsByProjectIdAndName(Long projectId, String name);
+
+    /**
+     * 프로젝트 ID와 slug로 조회
+     */
+    Optional<DomainServer> findByProjectIdAndSlug(Long projectId, String slug);
+
+    /**
+     * 프로젝트 ID와 slug 존재 여부 확인
+     */
+    boolean existsByProjectIdAndSlug(Long projectId, String slug);
 }
