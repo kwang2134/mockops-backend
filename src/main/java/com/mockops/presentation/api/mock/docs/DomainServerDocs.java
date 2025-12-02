@@ -23,7 +23,7 @@ public interface DomainServerDocs {
     @Operation(
             summary = "프로젝트의 서버 목록 조회",
             description = "특정 프로젝트에 속한 모든 도메인 서버 목록을 페이지 단위로 조회합니다. " +
-                    "각 서버의 상태(ACTIVE, INACTIVE, MAINTENANCE), 헬스체크 설정 등의 정보를 포함합니다. " +
+                    "각 서버의 상태(MOCKING, PENDING, DEPLOY, ERROR), 헬스체크 설정 등의 정보를 포함합니다. " +
                     "프로젝트 멤버만 조회할 수 있습니다."
     )
     @ApiResponses({
@@ -93,7 +93,7 @@ public interface DomainServerDocs {
             summary = "서버 생성",
             description = "프로젝트에 새로운 도메인 서버를 생성합니다. " +
                     "서버 이름은 필수이며, 헬스체크 URL과 주기를 설정할 수 있습니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 생성할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 생성할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -133,7 +133,7 @@ public interface DomainServerDocs {
             summary = "서버 정보 수정",
             description = "도메인 서버의 정보를 수정합니다. " +
                     "서버 이름, 상태, 헬스체크 설정 등을 변경할 수 있습니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 수정할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 수정할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -173,7 +173,7 @@ public interface DomainServerDocs {
             summary = "서버 삭제",
             description = "도메인 서버를 삭제합니다. " +
                     "서버에 속한 모든 Mock API도 함께 삭제됩니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 삭제할 수 있습니다."
+                    "DEVELOPER 이상의 권한을 가진 멤버만 삭제할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(

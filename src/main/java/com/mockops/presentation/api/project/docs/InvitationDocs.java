@@ -27,7 +27,7 @@ public interface InvitationDocs {
             summary = "팀원 초대 생성",
             description = "이메일을 통해 프로젝트에 팀원을 초대합니다. " +
                     "초대 링크가 포함된 이메일이 발송되며, 초대받은 사용자는 링크를 통해 프로젝트에 참여할 수 있습니다. " +
-                    "OWNER 또는 EDITOR 권한을 가진 멤버만 초대할 수 있습니다."
+                    "OWNER 또는 MANAGER 권한을 가진 멤버만 초대할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -67,7 +67,7 @@ public interface InvitationDocs {
             summary = "초대 목록 조회",
             description = "프로젝트의 초대 목록을 조회합니다. " +
                     "상태(PENDING, ACCEPTED, REJECTED, EXPIRED)로 필터링할 수 있으며, 페이지네이션을 지원합니다. " +
-                    "프로젝트 멤버만 조회할 수 있습니다."
+                    "OWNER 또는 MANAGER 권한을 가진 멤버만 조회할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -104,7 +104,7 @@ public interface InvitationDocs {
     @Operation(
             summary = "초대 취소",
             description = "발송된 초대를 취소합니다. " +
-                    "PENDING 상태의 초대만 취소할 수 있으며, OWNER 또는 EDITOR 권한을 가진 멤버만 취소할 수 있습니다."
+                    "PENDING 상태의 초대만 취소할 수 있으며, OWNER 또는 MANAGER 권한을 가진 멤버만 취소할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
