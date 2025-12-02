@@ -20,7 +20,7 @@ import java.util.Optional;
 
 /**
  * /mock/** 요청에 대한 커스텀 HandlerMapping
- * 요청 경로: /mock/{projectId}/{serverName}/**
+ * 요청 경로: /mock/{projectId}/{serverSlug}/**
  */
 @Slf4j
 @Component
@@ -44,8 +44,8 @@ public class MockOpsHandlerMapping implements HandlerMapping, Ordered {
         }
 
         try {
-            // 경로에서 projectId, serverName, 실제 경로 추출
-            // 형식: /mock/{projectId}/{serverName}/**
+            // 경로에서 projectId, serverSlug, 실제 경로 추출
+            // 형식: /mock/{projectId}/{serverSlug}/**
             String pathAfterMock = requestPath.substring(MOCK_PREFIX.length());
             String[] parts = pathAfterMock.split("/", 3);
 
@@ -55,22 +55,22 @@ public class MockOpsHandlerMapping implements HandlerMapping, Ordered {
             }
 
             Long projectId = Long.parseLong(parts[0]);
-            String serverName = parts[1];
+            String serverSlug = parts[1];
             String apiPath = "/" + parts[2];
             HttpMethod httpMethod = HttpMethod.valueOf(request.getMethod().toUpperCase());
 
-            log.debug("Mock 요청 파싱: projectId={}, serverName={}, apiPath={}, method={}",
-                projectId, serverName, apiPath, httpMethod);
+            log.debug("Mock 요청 파싱: projectId={}, serverSlug={}, apiPath={}, method={}",
+                projectId, serverSlug, apiPath, httpMethod);
 
             // 1. 캐시에서 조회 시도
             Optional<MockCacheDto> cachedMock = mockApiCachePort.getMockApiFromCache(
-                projectId, serverName, httpMethod, apiPath
+                projectId, serverSlug, httpMethod, apiPath
             );
 
             if (cachedMock.isPresent()) {
-                log.info("캐시 히트: projectId={}, serverName={}, path={}, method={}",
-                    projectId, serverName, apiPath, httpMethod);
-                MockApiHandler handler = new MockApiHandler(projectId, serverName, requestPath, cachedMock.get());
+                log.info("캐시 히트: projectId={}, serverSlug={}, path={}, method={}",
+                    projectId, serverSlug, apiPath, httpMethod);
+                MockApiHandler handler = new MockApiHandler(projectId, serverSlug, requestPath, cachedMock.get());
                 return new HandlerExecutionChain(handler);
             }
 
@@ -78,14 +78,10 @@ public class MockOpsHandlerMapping implements HandlerMapping, Ordered {
             log.debug("캐시 미스 - DB 조회 시작");
 
             // 2-1. 서버 조회
-            var server = domainServerService.findServerByProjectIdAndName(projectId, serverName);
-            if (server.isEmpty()) {
-                log.warn("서버를 찾을 수 없음: projectId={}, serverName={}", projectId, serverName);
-                return null;
-            }
+            var server = domainServerService.getServerByProjectIdAndSlug(projectId, serverSlug);
 
             // 2-2. 활성화된 Mock API 목록 조회
-            List<MockApi> mockApis = mockApiRepository.findByServerIdAndIsActiveTrue(server.get().getId());
+            List<MockApi> mockApis = mockApiRepository.findByServerIdAndIsActiveTrue(server.getId());
 
             // 2-3. AntPathMatcher로 패턴 매칭
             MockApi matchedMock = null;
@@ -99,16 +95,16 @@ public class MockOpsHandlerMapping implements HandlerMapping, Ordered {
             }
 
             if (matchedMock == null) {
-                log.warn("매칭되는 Mock API 없음: projectId={}, serverName={}, path={}, method={}",
-                    projectId, serverName, apiPath, httpMethod);
+                log.warn("매칭되는 Mock API 없음: projectId={}, serverSlug={}, path={}, method={}",
+                    projectId, serverSlug, apiPath, httpMethod);
                 return null;
             }
 
             // 2-4. 캐시에 저장
             MockCacheDto cacheDto = MockCacheDto.from(matchedMock);
-            mockApiCachePort.cacheMockApi(projectId, serverName, httpMethod, apiPath, cacheDto);
+            mockApiCachePort.cacheMockApi(projectId, serverSlug, httpMethod, apiPath, cacheDto);
 
-            MockApiHandler handler = new MockApiHandler(projectId, serverName, requestPath, cacheDto);
+            MockApiHandler handler = new MockApiHandler(projectId, serverSlug, requestPath, cacheDto);
             return new HandlerExecutionChain(handler);
 
         } catch (NumberFormatException e) {
