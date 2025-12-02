@@ -103,23 +103,9 @@ public class InvitationService {
         // 7. JWT 토큰 생성
         String token = jwtProvider.generateInvitationToken(invitation.getId(), request.email(), projectId);
 
-        // 8. 토큰 해시값 저장
+        // 8. 토큰 해시값 업데이트 (영속성 컨텍스트에서 업데이트)
         String tokenHash = hashToken(token);
-        Invitation savedInvitation = invitationRepository.findById(invitation.getId())
-            .orElseThrow(() -> ErrorCode.INVITATION_NOT_FOUND.serviceException());
-
-        // 리플렉션을 사용하지 않고 새 객체 생성
-        Invitation updatedInvitation = Invitation.builder()
-            .projectId(savedInvitation.getProjectId())
-            .inviterId(savedInvitation.getInviterId())
-            .invitedEmail(savedInvitation.getInvitedEmail())
-            .tokenValue(tokenHash)
-            .expiresAt(savedInvitation.getExpiresAt())
-            .memberRole(savedInvitation.getMemberRole())
-            .build();
-
-        invitationRepository.delete(savedInvitation);
-        invitation = invitationRepository.save(updatedInvitation);
+        invitation.updateTokenValue(tokenHash);
 
         // 9. 초대 링크 생성
         String invitationLink = frontendUrl + "/invitations/accept?token=" + token;

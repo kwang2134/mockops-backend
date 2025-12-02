@@ -82,4 +82,16 @@ public class Invitation extends BaseEntity {
         return this.status == InvitationStatus.PENDING
             && Instant.now().isBefore(this.expiresAt);
     }
+
+    /**
+     * 토큰 값 업데이트 (PENDING 상태에서만 가능)
+     */
+    public void updateTokenValue(String tokenValue) {
+        if (this.status != InvitationStatus.PENDING) {
+            throw new IllegalStateException(
+                "PENDING 상태의 초대장만 토큰을 업데이트할 수 있습니다. 현재 상태: " + this.status
+            );
+        }
+        this.tokenValue = tokenValue;
+    }
 }
