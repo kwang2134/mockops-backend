@@ -28,7 +28,7 @@ public class UserController {
     public ResponseEntity<UnifiedResponse<UserDetailResponse>> updateNickname(
             @AuthenticationPrincipal Long userId,
             @Valid @RequestBody UserUpdateNicknameRequest request) {
-        User user = userService.updateNickname(userId, request.getNickname());
+        User user = userService.updateNickname(userId, request.nickname());
         return ResponseEntity.ok(UnifiedResponse.success(UserDetailResponse.from(user)));
     }
 }

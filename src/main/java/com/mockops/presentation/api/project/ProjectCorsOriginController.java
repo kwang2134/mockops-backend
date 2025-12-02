@@ -2,8 +2,8 @@ package com.mockops.presentation.api.project;
 
 import com.mockops.domain.project.service.ProjectCorsOriginService;
 import com.mockops.global.common.UnifiedResponse;
-import com.mockops.presentation.api.project.dto.CorsOriginRequest;
-import com.mockops.presentation.api.project.dto.CorsOriginResponse;
+import com.mockops.presentation.api.project.dto.projectcorsorigin.CorsOriginRequest;
+import com.mockops.presentation.api.project.dto.projectcorsorigin.CorsOriginResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

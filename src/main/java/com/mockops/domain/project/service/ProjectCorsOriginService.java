@@ -5,7 +5,7 @@ import com.mockops.domain.project.infrastructure.CorsOriginCachePort;
 import com.mockops.domain.project.repository.ProjectCorsOriginRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.global.exception.ErrorCode;
-import com.mockops.presentation.api.project.dto.CorsOriginResponse;
+import com.mockops.presentation.api.project.dto.projectcorsorigin.CorsOriginResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

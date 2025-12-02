@@ -2,7 +2,7 @@ package com.mockops.presentation.api.project;
 
 import com.mockops.domain.project.service.ProjectService;
 import com.mockops.global.common.UnifiedResponse;
-import com.mockops.presentation.api.project.dto.*;
+import com.mockops.presentation.api.project.dto.project.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

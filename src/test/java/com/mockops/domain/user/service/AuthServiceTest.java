@@ -83,8 +83,8 @@ class AuthServiceTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo(newAccessToken);
-        assertThat(response.getRefreshToken()).isEqualTo(newRefreshToken);
+        assertThat(response.accessToken()).isEqualTo(newAccessToken);
+        assertThat(response.refreshToken()).isEqualTo(newRefreshToken);
         verify(jwtProvider).validateToken(refreshToken);
         verify(userRepository).findById(userId);
         verify(authProviderRepository).findByUserId(userId);
@@ -216,8 +216,8 @@ class AuthServiceTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo(accessToken);
-        assertThat(response.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(response.accessToken()).isEqualTo(accessToken);
+        assertThat(response.refreshToken()).isEqualTo(refreshToken);
         verify(userRepository).save(any(User.class));
         verify(authProviderRepository).save(any(AuthProvider.class));
     }
@@ -259,8 +259,8 @@ class AuthServiceTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo(accessToken);
-        assertThat(response.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(response.accessToken()).isEqualTo(accessToken);
+        assertThat(response.refreshToken()).isEqualTo(refreshToken);
         verify(userRepository, never()).save(any(User.class));
         verify(authProviderRepository, never()).save(any(AuthProvider.class));
     }
@@ -296,8 +296,8 @@ class AuthServiceTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo(accessToken);
-        assertThat(response.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(response.accessToken()).isEqualTo(accessToken);
+        assertThat(response.refreshToken()).isEqualTo(refreshToken);
         verify(userRepository, never()).save(any(User.class)); // 기존 사용자 사용
         verify(authProviderRepository).save(any(AuthProvider.class)); // 새 Provider만 저장
     }

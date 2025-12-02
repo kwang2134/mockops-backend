@@ -40,7 +40,7 @@ public class AuthController {
         TokenResponse tokenResponse = authService.refreshAccessToken(refreshToken);
 
         // 새로운 RefreshToken을 HttpOnly Cookie로 설정 (Token Rotation)
-        cookieUtils.setRefreshTokenCookie(response, tokenResponse.getRefreshToken(), isSecure);
+        cookieUtils.setRefreshTokenCookie(response, tokenResponse.refreshToken(), isSecure);
 
         return ResponseEntity.ok(UnifiedResponse.success(tokenResponse));
     }

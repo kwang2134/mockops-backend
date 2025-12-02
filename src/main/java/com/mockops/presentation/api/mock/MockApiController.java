@@ -2,30 +2,14 @@ package com.mockops.presentation.api.mock;
 
 import com.mockops.domain.mock.service.MockApiService;
 import com.mockops.global.common.UnifiedResponse;
-import com.mockops.presentation.api.mock.dto.MockApiBulkResponse;
-import com.mockops.presentation.api.mock.dto.MockApiCreateRequest;
-import com.mockops.presentation.api.mock.dto.MockApiCreateResponse;
-import com.mockops.presentation.api.mock.dto.MockApiDetailResponse;
-import com.mockops.presentation.api.mock.dto.MockApiListResponse;
-import com.mockops.presentation.api.mock.dto.MockApiResponse;
-import com.mockops.presentation.api.mock.dto.MockApiUpdateRequest;
-import com.mockops.presentation.api.mock.dto.MockApiUpdateResponse;
+import com.mockops.presentation.api.mock.dto.mockapi.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -86,16 +70,16 @@ public class MockApiController {
         @AuthenticationPrincipal Long userId
     ) {
         log.info("Mock API 생성 요청: serverId={}, name={}, method={}, path={}, userId={}",
-            serverId, request.getName(), request.getHttpMethod(), request.getEndpointPath(), userId);
+            serverId, request.name(), request.httpMethod(), request.endpointPath(), userId);
 
         MockApiCreateResponse response = mockApiService.createMockApiWithResponse(
             serverId,
-            request.getName(),
-            request.getHttpMethod(),
-            request.getEndpointPath(),
-            request.getResponseBody(),
-            request.getStatusCode(),
-            request.getIsActive(),
+            request.name(),
+            request.httpMethod(),
+            request.endpointPath(),
+            request.responseBody(),
+            request.statusCode(),
+            request.isActive(),
             userId
         );
 
@@ -136,12 +120,12 @@ public class MockApiController {
 
         MockApiUpdateResponse response = mockApiService.updateMockApiWithResponse(
             mockApiId,
-            request.getName(),
-            request.getHttpMethod(),
-            request.getEndpointPath(),
-            request.getResponseBody(),
-            request.getStatusCode(),
-            request.getIsActive(),
+            request.name(),
+            request.httpMethod(),
+            request.endpointPath(),
+            request.responseBody(),
+            request.statusCode(),
+            request.isActive(),
             userId
         );
 

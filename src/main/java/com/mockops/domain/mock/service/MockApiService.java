@@ -1,6 +1,5 @@
 package com.mockops.domain.mock.service;
 
-import com.mockops.domain.mock.dto.ParsedMockApi;
 import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.HttpMethod;
 import com.mockops.domain.mock.entity.MockApi;
@@ -10,7 +9,7 @@ import com.mockops.domain.mock.repository.MockApiRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.global.exception.ErrorCode;
-import com.mockops.presentation.api.mock.dto.*;
+import com.mockops.presentation.api.mock.dto.mockapi.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Mock API 관리 서비스
@@ -77,7 +75,7 @@ public class MockApiService {
         var groupedByName = actualMockApis.stream()
             .map(MockApiResponse::from)
             .collect(java.util.stream.Collectors.groupingBy(
-                MockApiResponse::getName,
+                MockApiResponse::name,
                 java.util.LinkedHashMap::new,
                 java.util.stream.Collectors.toList()
             ));
@@ -117,8 +115,8 @@ public class MockApiService {
      */
     @Transactional
     public MockApiCreateResponse createMockApiWithResponse(Long serverId, String name, HttpMethod httpMethod,
-                                                     String endpointPath, String responseBody,
-                                                     Integer statusCode, Boolean isActive, Long currentUserId) {
+                                                           String endpointPath, String responseBody,
+                                                           Integer statusCode, Boolean isActive, Long currentUserId) {
         MockApi mockApi = createMockApi(serverId, name, httpMethod, endpointPath, responseBody, statusCode, isActive, currentUserId);
         return MockApiCreateResponse.from(mockApi);
     }
