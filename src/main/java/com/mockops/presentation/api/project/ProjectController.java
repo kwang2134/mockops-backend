@@ -2,7 +2,8 @@ package com.mockops.presentation.api.project;
 
 import com.mockops.domain.project.service.ProjectService;
 import com.mockops.global.common.UnifiedResponse;
-import com.mockops.presentation.api.project.dto.*;
+import com.mockops.presentation.api.project.docs.ProjectDocs;
+import com.mockops.presentation.api.project.dto.project.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
-public class ProjectController {
+public class ProjectController implements ProjectDocs {
 
     private final ProjectService projectService;
 
@@ -27,6 +28,7 @@ public class ProjectController {
      * 프로젝트 생성
      * POST /api/v1/projects
      */
+    @Override
     @PostMapping
     public ResponseEntity<UnifiedResponse<ProjectCreateResponse>> createProject(
             @Valid @RequestBody ProjectCreateRequest request,
@@ -49,6 +51,7 @@ public class ProjectController {
      * 내 프로젝트 목록 조회 (페이지 기반)
      * GET /api/v1/projects
      */
+    @Override
     @GetMapping
     public ResponseEntity<UnifiedResponse<ProjectPageResponse>> getMyProjects(
             Pageable pageable,
@@ -64,6 +67,7 @@ public class ProjectController {
      * 프로젝트 상세 조회
      * GET /api/v1/projects/{projectId}
      */
+    @Override
     @GetMapping("/{projectId}")
     public ResponseEntity<UnifiedResponse<ProjectDetailResponse>> getProject(
             @PathVariable Long projectId,
@@ -79,6 +83,7 @@ public class ProjectController {
      * 프로젝트 정보 수정
      * PATCH /api/v1/projects/{projectId}
      */
+    @Override
     @PatchMapping("/{projectId}")
     public ResponseEntity<UnifiedResponse<ProjectUpdateResponse>> updateProject(
             @PathVariable Long projectId,
@@ -101,6 +106,7 @@ public class ProjectController {
      * 프로젝트 삭제
      * DELETE /api/v1/projects/{projectId}
      */
+    @Override
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(
             @PathVariable Long projectId,

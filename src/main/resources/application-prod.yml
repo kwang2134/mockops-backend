@@ -6,8 +6,8 @@ server:
 spring:
   # 데이터베이스 설정 (프로덕션 - 환경변수)
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: ${DB_URL}  # 예: jdbc:postgresql://db.example.com:5432/mockops_prod
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}  # 예: jdbc:mysql://db.example.com:3306/mockops_prod?useSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
@@ -22,7 +22,10 @@ spring:
     hibernate:
       ddl-auto: validate  # 프로덕션에서는 validate만 사용 (스키마 자동 변경 금지)
     show-sql: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: false
 
   # Redis 설정 (프로덕션 - 환경변수)
   data:

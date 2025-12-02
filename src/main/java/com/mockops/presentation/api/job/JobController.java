@@ -2,6 +2,7 @@ package com.mockops.presentation.api.job;
 
 import com.mockops.domain.job.service.JobTrackingService;
 import com.mockops.global.common.UnifiedResponse;
+import com.mockops.presentation.api.job.docs.JobDocs;
 import com.mockops.presentation.api.job.dto.JobStatusResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/jobs")
 @RequiredArgsConstructor
-public class JobController {
+public class JobController implements JobDocs {
 
     private final JobTrackingService jobTrackingService;
 
@@ -28,6 +29,7 @@ public class JobController {
      * 비동기 벌크 작업 상태 조회 (Polling)
      * GET /api/v1/jobs/{jobId}
      */
+    @Override
     @GetMapping("/{jobId}")
     public ResponseEntity<UnifiedResponse<JobStatusResponse>> getJobStatus(
             @PathVariable Long jobId,

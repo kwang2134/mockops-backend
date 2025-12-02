@@ -2,11 +2,8 @@ package com.mockops.presentation.api.mock;
 
 import com.mockops.domain.mock.service.DomainServerService;
 import com.mockops.global.common.UnifiedResponse;
-import com.mockops.presentation.api.mock.dto.DomainServerCreateRequest;
-import com.mockops.presentation.api.mock.dto.DomainServerCreateResponse;
-import com.mockops.presentation.api.mock.dto.DomainServerResponse;
-import com.mockops.presentation.api.mock.dto.DomainServerUpdateRequest;
-import com.mockops.presentation.api.mock.dto.DomainServerUpdateResponse;
+import com.mockops.presentation.api.mock.docs.DomainServerDocs;
+import com.mockops.presentation.api.mock.dto.domainserver.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,14 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 도메인 서버 관리 API 컨트롤러
@@ -33,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class DomainServerController {
+public class DomainServerController implements DomainServerDocs {
 
     private final DomainServerService domainServerService;
 
@@ -41,6 +31,7 @@ public class DomainServerController {
      * 프로젝트의 서버 목록 조회
      * GET /api/v1/projects/{projectId}/servers
      */
+    @Override
     @GetMapping("/projects/{projectId}/servers")
     public ResponseEntity<UnifiedResponse<Page<DomainServerResponse>>> getServersByProject(
         @PathVariable Long projectId,
@@ -60,6 +51,7 @@ public class DomainServerController {
      * 서버 상세 조회
      * GET /api/v1/servers/{serverId}
      */
+    @Override
     @GetMapping("/servers/{serverId}")
     public ResponseEntity<UnifiedResponse<DomainServerResponse>> getServer(
         @PathVariable Long serverId,
@@ -75,6 +67,7 @@ public class DomainServerController {
      * 서버 생성
      * POST /api/v1/projects/{projectId}/servers
      */
+    @Override
     @PostMapping("/projects/{projectId}/servers")
     public ResponseEntity<UnifiedResponse<DomainServerCreateResponse>> createServer(
         @PathVariable Long projectId,
@@ -82,13 +75,13 @@ public class DomainServerController {
         @AuthenticationPrincipal Long userId
     ) {
         log.info("서버 생성 요청: projectId={}, name={}, userId={}",
-            projectId, request.getName(), userId);
+            projectId, request.name(), userId);
 
         DomainServerCreateResponse response = domainServerService.createServerWithResponse(
             projectId,
-            request.getName(),
-            request.getHealthCheckUrl(),
-            request.getHealthCheckInterval(),
+            request.name(),
+            request.healthCheckUrl(),
+            request.healthCheckInterval(),
             userId
         );
 
@@ -100,6 +93,7 @@ public class DomainServerController {
      * 서버 정보 수정
      * PUT /api/v1/servers/{serverId}
      */
+    @Override
     @PutMapping("/servers/{serverId}")
     public ResponseEntity<UnifiedResponse<DomainServerUpdateResponse>> updateServer(
         @PathVariable Long serverId,
@@ -110,11 +104,11 @@ public class DomainServerController {
 
         DomainServerUpdateResponse response = domainServerService.updateServerWithResponse(
             serverId,
-            request.getName(),
-            request.getHealthCheckUrl(),
-            request.getHealthCheckInterval(),
-            request.getStatus(),
-            request.getIsHealthCheckActive(),
+            request.name(),
+            request.healthCheckUrl(),
+            request.healthCheckInterval(),
+            request.status(),
+            request.isHealthCheckActive(),
             userId
         );
 
@@ -125,6 +119,7 @@ public class DomainServerController {
      * 서버 삭제
      * DELETE /api/v1/servers/{serverId}
      */
+    @Override
     @DeleteMapping("/servers/{serverId}")
     public ResponseEntity<Void> deleteServer(
         @PathVariable Long serverId,

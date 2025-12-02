@@ -2,8 +2,9 @@ package com.mockops.presentation.api.project;
 
 import com.mockops.domain.project.service.ProjectCorsOriginService;
 import com.mockops.global.common.UnifiedResponse;
-import com.mockops.presentation.api.project.dto.CorsOriginRequest;
-import com.mockops.presentation.api.project.dto.CorsOriginResponse;
+import com.mockops.presentation.api.project.docs.ProjectCorsOriginDocs;
+import com.mockops.presentation.api.project.dto.projectcorsorigin.CorsOriginRequest;
+import com.mockops.presentation.api.project.dto.projectcorsorigin.CorsOriginResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/projects/{projectId}/cors")
 @RequiredArgsConstructor
-public class ProjectCorsOriginController {
+public class ProjectCorsOriginController implements ProjectCorsOriginDocs {
 
     private final ProjectCorsOriginService corsOriginService;
 
@@ -29,6 +30,7 @@ public class ProjectCorsOriginController {
      * 허용 Origin 추가
      * POST /api/v1/projects/{projectId}/cors
      */
+    @Override
     @PostMapping
     public ResponseEntity<UnifiedResponse<CorsOriginResponse>> addCorsOrigin(
             @PathVariable Long projectId,
@@ -51,6 +53,7 @@ public class ProjectCorsOriginController {
      * 허용 Origin 목록 조회
      * GET /api/v1/projects/{projectId}/cors
      */
+    @Override
     @GetMapping
     public ResponseEntity<UnifiedResponse<List<CorsOriginResponse>>> getCorsOrigins(
             @PathVariable Long projectId,
@@ -66,6 +69,7 @@ public class ProjectCorsOriginController {
      * 허용 Origin 삭제
      * DELETE /api/v1/projects/{projectId}/cors/{corsId}
      */
+    @Override
     @DeleteMapping("/{corsId}")
     public ResponseEntity<Void> deleteCorsOrigin(
             @PathVariable Long projectId,

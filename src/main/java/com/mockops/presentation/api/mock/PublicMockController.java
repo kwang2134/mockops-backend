@@ -1,8 +1,6 @@
 package com.mockops.presentation.api.mock;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.mockops.presentation.api.mock.docs.PublicMockDocs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/mock")
-@Tag(name = "Public Mock API", description = "Mock API 요청 수신 엔드포인트 (Public)")
-public class PublicMockController {
+public class PublicMockController implements PublicMockDocs {
 
     /**
      * Mock API 요청 처리 (GET)
@@ -35,16 +32,11 @@ public class PublicMockController {
      * @param projectId 프로젝트 ID
      * @param serverName 서버 이름
      */
-    @Operation(
-        summary = "Mock API 요청 (GET)",
-        description = "등록된 Mock API로 GET 요청을 보냅니다. " +
-                     "실제 처리는 MockOpsHandlerMapping에서 수행되며, " +
-                     "이 메소드는 실행되지 않습니다."
-    )
+    @Override
     @GetMapping("/{projectId}/{serverName}/**")
     public ResponseEntity<String> handleGetRequest(
-        @Parameter(description = "프로젝트 ID") @PathVariable Long projectId,
-        @Parameter(description = "서버 이름") @PathVariable String serverName
+        @PathVariable Long projectId,
+        @PathVariable String serverName
     ) {
         // 이 코드는 절대 실행되지 않습니다 (MockOpsHandlerMapping이 가로챔)
         log.error("PublicMockController.handleGetRequest 실행됨 - 이것은 오류입니다!");
@@ -54,10 +46,7 @@ public class PublicMockController {
     /**
      * Mock API 요청 처리 (POST)
      */
-    @Operation(
-        summary = "Mock API 요청 (POST)",
-        description = "등록된 Mock API로 POST 요청을 보냅니다."
-    )
+    @Override
     @PostMapping("/{projectId}/{serverName}/**")
     public ResponseEntity<String> handlePostRequest(
         @PathVariable Long projectId,
@@ -70,10 +59,7 @@ public class PublicMockController {
     /**
      * Mock API 요청 처리 (PUT)
      */
-    @Operation(
-        summary = "Mock API 요청 (PUT)",
-        description = "등록된 Mock API로 PUT 요청을 보냅니다."
-    )
+    @Override
     @PutMapping("/{projectId}/{serverName}/**")
     public ResponseEntity<String> handlePutRequest(
         @PathVariable Long projectId,
@@ -86,10 +72,7 @@ public class PublicMockController {
     /**
      * Mock API 요청 처리 (DELETE)
      */
-    @Operation(
-        summary = "Mock API 요청 (DELETE)",
-        description = "등록된 Mock API로 DELETE 요청을 보냅니다."
-    )
+    @Override
     @DeleteMapping("/{projectId}/{serverName}/**")
     public ResponseEntity<String> handleDeleteRequest(
         @PathVariable Long projectId,
@@ -102,10 +85,7 @@ public class PublicMockController {
     /**
      * Mock API 요청 처리 (PATCH)
      */
-    @Operation(
-        summary = "Mock API 요청 (PATCH)",
-        description = "등록된 Mock API로 PATCH 요청을 보냅니다."
-    )
+    @Override
     @PatchMapping("/{projectId}/{serverName}/**")
     public ResponseEntity<String> handlePatchRequest(
         @PathVariable Long projectId,
