@@ -7,6 +7,7 @@ import com.mockops.domain.project.repository.ProjectRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.service.UserService;
+import com.mockops.domain.webhook.service.WebhookSecretService;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.presentation.api.project.dto.project.*;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMemberService projectMemberService;
     private final UserService userService;
+    private final WebhookSecretService webhookSecretService;
 
     public Project getProjectById(Long projectId) {
         return projectRepository.findById(projectId)
@@ -115,6 +117,7 @@ public class ProjectService {
     /**
      * 프로젝트 생성 - ProjectCreateResponse 반환
      * 생성자를 자동으로 OWNER로 추가
+     * WebhookSecret 자동 생성
      */
     @Transactional
     public ProjectCreateResponse createProject(String name, String description, Long ownerId, String slackWebhookUrl) {
@@ -135,6 +138,12 @@ public class ProjectService {
 
         // 생성자를 OWNER로 자동 추가
         projectMemberService.addProjectMember(savedProject.getId(), ownerId, MemberRole.OWNER);
+
+        // WebhookSecret 자동 생성
+        webhookSecretService.createWebhookSecret(savedProject.getId());
+
+        log.info("프로젝트 생성 완료 (WebhookSecret 포함): projectId={}, ownerId={}, name={}",
+                savedProject.getId(), ownerId, name);
 
         return ProjectCreateResponse.from(savedProject);
     }
