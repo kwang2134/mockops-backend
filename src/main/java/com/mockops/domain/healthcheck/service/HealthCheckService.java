@@ -58,7 +58,7 @@ public class HealthCheckService {
                 Long serverId = RedisHealthCheckCache.parseServerId(job);
                 String healthCheckPath = RedisHealthCheckCache.parseHealthCheckPath(job);
 
-                performHealthCheck(serverId, healthCheckPath);
+                performHealthCheck(serverId, healthCheckPath, interval);
             } catch (Exception e) {
                 log.error("헬스 체크 처리 중 오류 발생: job={}, error={}", job, e.getMessage(), e);
             }
@@ -72,9 +72,10 @@ public class HealthCheckService {
      *
      * @param serverId 서버 ID
      * @param healthCheckPath 헬스 체크 경로
+     * @param interval 헬스 체크 주기 (TTL 계산용)
      */
     @Transactional
-    public void performHealthCheck(Long serverId, String healthCheckPath) {
+    public void performHealthCheck(Long serverId, String healthCheckPath, String interval) {
         DomainServer server = domainServerRepository.findById(serverId).orElse(null);
 
         if (server == null) {
@@ -85,13 +86,13 @@ public class HealthCheckService {
         // 헬스 체크 URL 구성
         String fullUrl = constructHealthCheckUrl(server, healthCheckPath);
 
-        log.debug("헬스 체크 시작: serverId={}, url={}", serverId, fullUrl);
+        log.debug("헬스 체크 시작: serverId={}, url={}, interval={}", serverId, fullUrl, interval);
 
         // WebClient로 HTTP GET 요청
         boolean isHealthy = checkHealth(fullUrl);
 
         // 결과에 따라 서버 상태 업데이트
-        updateServerStatus(server, isHealthy);
+        updateServerStatus(server, isHealthy, interval);
 
         // lastCheckedAt 업데이트
         server.updateLastCheckedAt();
@@ -135,8 +136,9 @@ public class HealthCheckService {
      *
      * @param server 도메인 서버
      * @param isHealthy 헬스 체크 성공 여부
+     * @param interval 헬스 체크 주기 (TTL 계산용)
      */
-    private void updateServerStatus(DomainServer server, boolean isHealthy) {
+    private void updateServerStatus(DomainServer server, boolean isHealthy, String interval) {
         ServerStatus previousStatus = server.getStatus();
 
         if (isHealthy) {
@@ -144,7 +146,7 @@ public class HealthCheckService {
             handleHealthyServer(server, previousStatus);
         } else {
             // 헬스 체크 실패 시
-            handleUnhealthyServer(server, previousStatus);
+            handleUnhealthyServer(server, previousStatus, interval);
         }
     }
 
@@ -167,12 +169,17 @@ public class HealthCheckService {
 
     /**
      * 헬스 체크 실패 시 처리
+     *
+     * @param server 도메인 서버
+     * @param previousStatus 이전 상태
+     * @param interval 헬스 체크 주기 (TTL 계산용)
      */
-    private void handleUnhealthyServer(DomainServer server, ServerStatus previousStatus) {
-        // 실패 카운트 증가
-        int failureCount = incrementFailureCount(server.getId());
+    private void handleUnhealthyServer(DomainServer server, ServerStatus previousStatus, String interval) {
+        // 실패 카운트 증가 (interval에 따라 적절한 TTL 설정)
+        int failureCount = incrementFailureCount(server.getId(), interval);
 
-        log.warn("헬스 체크 실패: serverId={}, failureCount={}/{}", server.getId(), failureCount, FAILURE_THRESHOLD);
+        log.warn("헬스 체크 실패: serverId={}, interval={}, failureCount={}/{}",
+                server.getId(), interval, failureCount, FAILURE_THRESHOLD);
 
         // 3회 연속 실패 시 ERROR 상태로 전환
         if (failureCount >= FAILURE_THRESHOLD && previousStatus == ServerStatus.DEPLOYED) {
@@ -189,16 +196,38 @@ public class HealthCheckService {
      * 서버의 연속 실패 카운트 증가
      *
      * @param serverId 서버 ID
+     * @param interval 헬스 체크 주기 (TTL 계산용)
      * @return 현재 실패 카운트
      */
-    private int incrementFailureCount(Long serverId) {
+    private int incrementFailureCount(Long serverId, String interval) {
         String key = FAILURE_COUNT_KEY_PREFIX + serverId;
         Long count = redisTemplate.opsForValue().increment(key);
 
-        // TTL 설정 (1시간 후 자동 삭제)
-        redisTemplate.expire(key, 1, TimeUnit.HOURS);
+        // interval에 따라 적절한 TTL 설정
+        // 3회 연속 실패를 감지하려면 (주기 * 4) 이상의 TTL이 필요
+        long ttlHours = calculateTTL(interval);
+        redisTemplate.expire(key, ttlHours, TimeUnit.HOURS);
+
+        log.debug("실패 카운트 증가: serverId={}, interval={}, count={}, ttl={}시간",
+                serverId, interval, count, ttlHours);
 
         return count != null ? count.intValue() : 0;
+    }
+
+    /**
+     * interval에 따라 적절한 TTL 계산
+     *
+     * @param interval 헬스 체크 주기
+     * @return TTL (시간 단위)
+     */
+    private long calculateTTL(String interval) {
+        return switch (interval) {
+            case "5m" -> 1;   // 5분 * 4 = 20분 → 1시간이면 충분
+            case "10m" -> 1;  // 10분 * 4 = 40분 → 1시간이면 충분
+            case "30m" -> 2;  // 30분 * 4 = 2시간
+            case "1h" -> 4;   // 1시간 * 4 = 4시간
+            default -> 1;     // 기본값
+        };
     }
 
     /**
