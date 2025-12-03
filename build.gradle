@@ -64,6 +64,10 @@ dependencies {
 
 	// YAML 파싱 (OpenAPI 스펙 파일 업로드 지원)
 	implementation 'org.yaml:snakeyaml:2.2'
+
+    // retry
+    implementation 'org.springframework.retry:spring-retry:2.0.11'
+    implementation 'org.springframework:spring-aspects'
 }
 
 tasks.named('test') {

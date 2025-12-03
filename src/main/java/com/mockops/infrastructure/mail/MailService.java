@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -32,6 +33,7 @@ public class MailService {
      * @param templateName Thymeleaf 템플릿 이름
      * @param variables 템플릿 변수
      */
+    @Retryable(maxRetries = 3, value = Exception.class, delay = 1000)
     public void sendHtmlEmail(String to, String subject, String templateName, Map<String, Object> variables) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
