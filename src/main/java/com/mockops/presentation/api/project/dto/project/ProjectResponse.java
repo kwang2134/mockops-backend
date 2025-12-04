@@ -9,14 +9,16 @@ public record ProjectResponse(
         String name,
         String description,
         String ownerNickname,
+        Integer unreadNotificationCount,
         Instant updatedAt
 ) {
-    public static ProjectResponse from(Project project, String ownerNickname) {
+    public static ProjectResponse from(Project project, String ownerNickname, Integer unreadNotificationCount) {
         return new ProjectResponse(
                 project.getId(),
                 project.getName(),
                 project.getDescription(),
                 ownerNickname,
+                unreadNotificationCount,
                 project.getUpdatedAt()
         );
     }

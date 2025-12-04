@@ -1,8 +1,11 @@
 package com.mockops.domain.healthcheck.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.ServerStatus;
 import com.mockops.domain.mock.repository.DomainServerRepository;
+import com.mockops.domain.notification.entity.NotificationType;
+import com.mockops.domain.notification.service.NotificationService;
 import com.mockops.domain.notification.service.SlackNotificationService;
 import com.mockops.infrastructure.cache.RedisHealthCheckCache;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +40,8 @@ public class HealthCheckService {
     private final RedisHealthCheckCache redisHealthCheckCache;
     private final RedisTemplate<String, Object> redisTemplate;
     private final SlackNotificationService slackNotificationService;
+    private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
     /**
      * 특정 주기의 모든 헬스 체크 수행 (벌크 처리)
@@ -164,6 +171,9 @@ public class HealthCheckService {
 
             // Slack 알림 전송 (ERROR -> DEPLOYED)
             slackNotificationService.sendStatusChangeNotification(server, previousStatus, ServerStatus.DEPLOYED);
+
+            // 서버 상태 변경 알림 생성 (복구)
+            createServerStatusChangeNotification(server, previousStatus, ServerStatus.DEPLOYED);
         }
     }
 
@@ -181,6 +191,9 @@ public class HealthCheckService {
         log.warn("헬스 체크 실패: serverId={}, interval={}, failureCount={}/{}",
                 server.getId(), interval, failureCount, FAILURE_THRESHOLD);
 
+        // 헬스 체크 실패 알림 생성
+        createHealthCheckFailureNotification(server, failureCount);
+
         // 3회 연속 실패 시 ERROR 상태로 전환
         if (failureCount >= FAILURE_THRESHOLD && previousStatus == ServerStatus.DEPLOYED) {
             server.updateStatus(ServerStatus.ERROR);
@@ -189,6 +202,9 @@ public class HealthCheckService {
 
             // Slack 알림 전송 (DEPLOYED -> ERROR)
             slackNotificationService.sendStatusChangeNotification(server, previousStatus, ServerStatus.ERROR);
+
+            // 서버 상태 변경 알림 생성
+            createServerStatusChangeNotification(server, previousStatus, ServerStatus.ERROR);
         }
     }
 
@@ -339,5 +355,77 @@ public class HealthCheckService {
         }
 
         return "/health"; // 기본값
+    }
+
+    /**
+     * 헬스 체크 실패 알림 생성
+     */
+    private void createHealthCheckFailureNotification(DomainServer server, int failureCount) {
+        try {
+            // metadata 생성
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("serverId", server.getId());
+            metadata.put("serverName", server.getName());
+            metadata.put("projectId", server.getProjectId());
+            metadata.put("failureCount", failureCount);
+            metadata.put("healthCheckUrl", server.getHealthCheckUrl());
+            String metadataJson = objectMapper.writeValueAsString(metadata);
+
+            // 알림 생성
+            notificationService.createNotification(
+                    null,  // recipientUserId (null, 서버 귀속)
+                    server.getId(),  // domainServerId
+                    NotificationType.HEALTH_CHECK_FAILURE,
+                    "헬스 체크 실패",
+                    String.format("서버 '%s'의 헬스 체크가 실패했습니다. (%d회 연속 실패)",
+                            server.getName(), failureCount),
+                    metadataJson
+            );
+            log.info("헬스 체크 실패 알림 생성: serverId={}, failureCount={}", server.getId(), failureCount);
+        } catch (Exception e) {
+            log.error("헬스 체크 실패 알림 생성 실패: serverId={}, error={}", server.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * 서버 상태 변경 알림 생성
+     */
+    private void createServerStatusChangeNotification(DomainServer server, ServerStatus from, ServerStatus to) {
+        try {
+            // metadata 생성
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("serverId", server.getId());
+            metadata.put("serverName", server.getName());
+            metadata.put("projectId", server.getProjectId());
+            metadata.put("fromStatus", from.name());
+            metadata.put("toStatus", to.name());
+            String metadataJson = objectMapper.writeValueAsString(metadata);
+
+            // 알림 메시지 생성
+            String message;
+            if (to == ServerStatus.ERROR) {
+                message = String.format("서버 '%s'가 ERROR 상태로 전환되었습니다. (이전 상태: %s)",
+                        server.getName(), from.name());
+            } else if (to == ServerStatus.DEPLOYED && from == ServerStatus.ERROR) {
+                message = String.format("서버 '%s'가 정상 상태로 복구되었습니다.",
+                        server.getName());
+            } else {
+                message = String.format("서버 '%s'의 상태가 변경되었습니다. (%s → %s)",
+                        server.getName(), from.name(), to.name());
+            }
+
+            // 알림 생성
+            notificationService.createNotification(
+                    null,  // recipientUserId (null, 서버 귀속)
+                    server.getId(),  // domainServerId
+                    NotificationType.SERVER_STATUS_CHANGED,
+                    "서버 상태 변경",
+                    message,
+                    metadataJson
+            );
+            log.info("서버 상태 변경 알림 생성: serverId={}, {} → {}", server.getId(), from, to);
+        } catch (Exception e) {
+            log.error("서버 상태 변경 알림 생성 실패: serverId={}, error={}", server.getId(), e.getMessage());
+        }
     }
 }

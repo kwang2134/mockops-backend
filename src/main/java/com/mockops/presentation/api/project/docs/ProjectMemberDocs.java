@@ -1,8 +1,8 @@
 package com.mockops.presentation.api.project.docs;
 
 import com.mockops.global.common.UnifiedResponse;
+import com.mockops.presentation.api.project.dto.MemberInviteAcceptRequest;
 import com.mockops.presentation.api.project.dto.project.ProjectMemberResponse;
-import com.mockops.presentation.api.project.dto.projectmember.MemberInviteRequest;
 import com.mockops.presentation.api.project.dto.projectmember.MemberListResponse;
 import com.mockops.presentation.api.project.dto.projectmember.MemberRoleUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,20 +23,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface ProjectMemberDocs {
 
     @Operation(
-            summary = "팀원 초대",
-            description = "이메일을 통해 프로젝트에 새로운 팀원을 초대합니다. " +
-                    "초대된 멤버는 자동으로 VIEWER 권한으로 등록됩니다. " +
-                    "OWNER 또는 MANAGER 권한을 가진 멤버만 초대할 수 있습니다."
+            summary = "알림을 통한 초대 수락",
+            description = "웹 서비스를 통해 알림으로 받은 초대를 수락합니다. " +
+                    "로그인된 사용자가 알림의 초대를 수락하여 프로젝트 멤버로 참여합니다. " +
+                    "초대장에 명시된 역할로 프로젝트에 합류하게 됩니다."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "201",
-                    description = "팀원 초대 성공",
+                    description = "초대 수락 성공",
                     content = @Content(schema = @Schema(implementation = ProjectMemberResponse.class))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "유효하지 않은 이메일 또는 이미 멤버인 사용자",
+                    description = "유효하지 않은 요청 또는 만료된 초대장",
                     content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
             ),
             @ApiResponse(
@@ -46,19 +46,19 @@ public interface ProjectMemberDocs {
             ),
             @ApiResponse(
                     responseCode = "403",
-                    description = "팀원 초대 권한 없음 (OWNER 또는 EDITOR만 가능)",
+                    description = "본인의 초대만 수락 가능",
                     content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "프로젝트 또는 사용자를 찾을 수 없음",
+                    description = "프로젝트 또는 초대장을 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
             )
     })
-    ResponseEntity<UnifiedResponse<ProjectMemberResponse>> inviteMember(
+    ResponseEntity<UnifiedResponse<ProjectMemberResponse>> acceptMember(
             @Parameter(description = "프로젝트 ID", example = "1")
             @PathVariable Long projectId,
-            @Valid @RequestBody MemberInviteRequest request,
+            @Valid @RequestBody MemberInviteAcceptRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     );
 
