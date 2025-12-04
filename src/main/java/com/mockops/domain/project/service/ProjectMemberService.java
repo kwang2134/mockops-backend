@@ -1,6 +1,9 @@
 package com.mockops.domain.project.service;
 
+import com.mockops.domain.project.entity.Invitation;
+import com.mockops.domain.project.entity.InvitationStatus;
 import com.mockops.domain.project.entity.ProjectMember;
+import com.mockops.domain.project.repository.InvitationRepository;
 import com.mockops.domain.project.repository.ProjectMemberRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.user.entity.User;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 public class ProjectMemberService {
 
     private final ProjectMemberRepository projectMemberRepository;
+    private final InvitationRepository invitationRepository;
     private final UserService userService;
 
     public ProjectMember getProjectMemberById(Long memberId) {
@@ -203,5 +207,56 @@ public class ProjectMemberService {
 
     public boolean isProjectMember(Long projectId, Long userId, MemberRole memberRole) {
         return projectMemberRepository.existsByProjectIdAndUserIdAndMemberRole(projectId, userId, memberRole);
+    }
+
+    /**
+     * 알림을 통한 초대 수락
+     * 웹 서비스를 통해 알림으로 받은 초대를 수락하여 프로젝트 멤버로 추가
+     */
+    @Transactional
+    public ProjectMemberResponse acceptInvitationFromNotification(Long projectId, Long requestUserId, Long authenticatedUserId) {
+        // 요청의 userId와 인증된 userId가 일치하는지 확인
+        if (!authenticatedUserId.equals(requestUserId)) {
+            throw ErrorCode.PERMISSION_DENIED.serviceException(
+                    "본인의 초대만 수락할 수 있습니다."
+            );
+        }
+
+        // 해당 사용자의 이메일로 PENDING 상태의 초대장 조회
+        User user = userService.getUserById(authenticatedUserId);
+        List<Invitation> pendingInvitations = invitationRepository
+                .findByProjectIdAndInvitedEmailAndStatus(projectId, user.getEmail(), InvitationStatus.PENDING);
+
+        if (pendingInvitations.isEmpty()) {
+            throw ErrorCode.INVITATION_NOT_FOUND.serviceException(
+                    "해당 프로젝트의 초대장을 찾을 수 없습니다."
+            );
+        }
+
+        // 가장 최신 초대장 사용
+        Invitation invitation = pendingInvitations.get(0);
+
+        // 초대장이 유효한지 확인
+        if (!invitation.isValid()) {
+            throw ErrorCode.INVITATION_EXPIRED.serviceException(
+                    "만료되었거나 무효한 초대장입니다."
+            );
+        }
+
+        // 프로젝트 멤버로 추가
+        ProjectMember member = addProjectMember(
+                projectId,
+                authenticatedUserId,
+                invitation.getMemberRole()
+        );
+
+        // 초대장 상태를 ACCEPTED로 변경 (더티 체킹으로 자동 UPDATE)
+        invitation.accept();
+
+        log.info("알림을 통한 초대 수락 완료: projectId={}, userId={}, invitationId={}",
+                projectId, authenticatedUserId, invitation.getId());
+
+        // Response 생성
+        return ProjectMemberResponse.from(member, user.getNickname());
     }
 }
