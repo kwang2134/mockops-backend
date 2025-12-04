@@ -62,13 +62,6 @@ public class ProjectMemberController implements ProjectMemberDocs {
             );
         }
 
-        // 요청의 projectId와 경로의 projectId가 일치하는지 확인
-        if (!projectId.equals(request.projectId())) {
-            throw ErrorCode.BAD_REQUEST.serviceException(
-                    "프로젝트 ID가 일치하지 않습니다."
-            );
-        }
-
         // 해당 사용자의 이메일로 PENDING 상태의 초대장 조회
         User user = userService.getUserById(userId);
         List<Invitation> pendingInvitations = invitationRepository

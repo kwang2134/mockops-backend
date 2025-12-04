@@ -8,9 +8,6 @@ import jakarta.validation.constraints.NotNull;
  */
 public record MemberInviteAcceptRequest(
         @NotNull(message = "사용자 ID는 필수입니다.")
-        Long userId,
-
-        @NotNull(message = "프로젝트 ID는 필수입니다.")
-        Long projectId
+        Long userId
 ) {
 }
