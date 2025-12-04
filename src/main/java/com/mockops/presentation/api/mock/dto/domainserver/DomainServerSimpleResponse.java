@@ -13,14 +13,16 @@ public record DomainServerSimpleResponse(
         String name,
         String slug,
         ServerStatus status,
+        Integer unreadNotificationCount,
         Instant updatedAt
 ) {
-    public static DomainServerSimpleResponse from(DomainServer domainServer) {
+    public static DomainServerSimpleResponse from(DomainServer domainServer, Integer unreadNotificationCount) {
         return new DomainServerSimpleResponse(
                 domainServer.getId(),
                 domainServer.getName(),
                 domainServer.getSlug(),
                 domainServer.getStatus(),
+                unreadNotificationCount,
                 domainServer.getUpdatedAt()
         );
     }

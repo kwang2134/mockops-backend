@@ -1,9 +1,14 @@
 package com.mockops.domain.mock.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mockops.domain.job.service.JobTrackingService;
 import com.mockops.domain.mock.dto.ParsedMockApi;
+import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.event.BulkCreationEvent;
+import com.mockops.domain.mock.repository.DomainServerRepository;
 import com.mockops.domain.mock.repository.MockApiRepository;
+import com.mockops.domain.notification.entity.NotificationType;
+import com.mockops.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -11,8 +16,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -28,6 +35,9 @@ public class MockApiBulkWorker {
     private final MockApiBulkInsertService mockApiBulkInsertService;
     private final MockApiRepository mockApiRepository;
     private final JobTrackingService jobTrackingService;
+    private final DomainServerRepository domainServerRepository;
+    private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
     /**
      * BulkCreationEvent 수신하여 비동기적으로 Mock API 대량 생성 처리
@@ -69,6 +79,9 @@ public class MockApiBulkWorker {
             // 작업 성공 처리
             jobTrackingService.markJobAsSuccess(jobId, parsedMockApis.size(), insertedCount);
 
+            // Mock API 벌크 생성 성공 알림 생성
+            createBulkSuccessNotification(serverId, jobId, insertedCount, duplicateCount, parsedMockApis.size());
+
         } catch (Exception e) {
             log.error("[{}] Mock API 대량 생성 실패: jobId={}, serverId={}, error={}",
                     threadName, jobId, serverId, e.getMessage(), e);
@@ -77,6 +90,9 @@ public class MockApiBulkWorker {
             String errorMessage = String.format("파일 처리 실패: %s - %s",
                     e.getClass().getSimpleName(), e.getMessage());
             jobTrackingService.markJobAsFailure(jobId, errorMessage);
+
+            // Mock API 벌크 생성 실패 알림 생성
+            createBulkFailureNotification(serverId, jobId, errorMessage);
         }
     }
 
@@ -110,5 +126,77 @@ public class MockApiBulkWorker {
         }
 
         return uniqueMockApis;
+    }
+
+    /**
+     * Mock API 벌크 생성 성공 알림 생성
+     */
+    private void createBulkSuccessNotification(Long serverId, Long jobId, int insertedCount, int duplicateCount, int totalParsed) {
+        try {
+            DomainServer server = domainServerRepository.findById(serverId).orElse(null);
+            if (server == null) {
+                log.warn("서버를 찾을 수 없어 알림 생성 실패: serverId={}", serverId);
+                return;
+            }
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("serverId", serverId);
+            metadata.put("serverName", server.getName());
+            metadata.put("projectId", server.getProjectId());
+            metadata.put("jobId", jobId);
+            metadata.put("totalParsed", totalParsed);
+            metadata.put("insertedCount", insertedCount);
+            metadata.put("duplicateCount", duplicateCount);
+            String metadataJson = objectMapper.writeValueAsString(metadata);
+
+            notificationService.createNotification(
+                    null,  // recipientUserId (server-attributed)
+                    serverId,  // domainServerId
+                    NotificationType.MOCK_BULK_SUCCESS,
+                    "Mock API 일괄 생성 성공",
+                    String.format("서버 '%s'에 Mock API %d개가 성공적으로 생성되었습니다. (중복 제외: %d개)",
+                            server.getName(), insertedCount, duplicateCount),
+                    metadataJson
+            );
+            log.info("Mock API 벌크 생성 성공 알림 생성: serverId={}, jobId={}", serverId, jobId);
+        } catch (Exception e) {
+            log.error("Mock API 벌크 생성 성공 알림 생성 실패: serverId={}, jobId={}, error={}",
+                    serverId, jobId, e.getMessage());
+        }
+    }
+
+    /**
+     * Mock API 벌크 생성 실패 알림 생성
+     */
+    private void createBulkFailureNotification(Long serverId, Long jobId, String errorMessage) {
+        try {
+            DomainServer server = domainServerRepository.findById(serverId).orElse(null);
+            if (server == null) {
+                log.warn("서버를 찾을 수 없어 알림 생성 실패: serverId={}", serverId);
+                return;
+            }
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("serverId", serverId);
+            metadata.put("serverName", server.getName());
+            metadata.put("projectId", server.getProjectId());
+            metadata.put("jobId", jobId);
+            metadata.put("errorMessage", errorMessage);
+            String metadataJson = objectMapper.writeValueAsString(metadata);
+
+            notificationService.createNotification(
+                    null,  // recipientUserId (server-attributed)
+                    serverId,  // domainServerId
+                    NotificationType.MOCK_BULK_FAILURE,
+                    "Mock API 일괄 생성 실패",
+                    String.format("서버 '%s'의 Mock API 일괄 생성이 실패했습니다. 원인: %s",
+                            server.getName(), errorMessage),
+                    metadataJson
+            );
+            log.info("Mock API 벌크 생성 실패 알림 생성: serverId={}, jobId={}", serverId, jobId);
+        } catch (Exception e) {
+            log.error("Mock API 벌크 생성 실패 알림 생성 실패: serverId={}, jobId={}, error={}",
+                    serverId, jobId, e.getMessage());
+        }
     }
 }

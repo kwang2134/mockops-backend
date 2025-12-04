@@ -42,6 +42,7 @@
 |                             |                            | `name`            | String                  | 프로젝트 이름                     |
 |                             |                            | `description`     | String                  | 설명                          |
 |                             |                            | `ownerNickName`   | String                  | 생성자(PO) 닉네임                 |
+|                             |                            | `unreadNotificationCount`       | Integer                 | 해당 프로젝트 내 모든 도메인 서버의 미확인 알림 총 개수 (집계 필드)                    |
 |                             |                            | `updatedAt`       | Instant                 | 최종 수정 일시                    |
 | **`ProjectPageResponse`**   | 프로젝트 목록 응답 (페이지 기반 offset) | `data`            | List<`ProjectResponse`> | 프로젝트 목록 정보 리스트              |
 |                             |                            | `totalPages`      | Integer                 | 전체 페이지 수                    |
@@ -52,17 +53,18 @@
 
 ### 3. 👥 프로젝트 멤버 관리 DTO
 
-| **DTO 클래스명** | **역할** | **필드명** | **타입** | **설명** |
-| --- | --- | --- | --- | --- |
-| **`MemberInviteRequest`** | 멤버 초대 요청 | `email` | String | 초대할 사용자의 이메일 |
-| **`MemberRoleUpdateRequest`** | 멤버 역할 변경 요청 | `memberRole` | String | 변경할 역할 (`OWNER`/`MANAGER`/`DEVELOPER`/`VIEWER`) |
-| **`ProjectMemberResponse`** | 멤버 정보 응답 | `id` | Long | `ProjectMember` 고유 ID |
-|  |  | `userId` | Long | 사용자 ID |
-|  |  | `nickname` | String | 사용자 닉네임 |
-|  |  | `memberRole` | String | 프로젝트 내 역할 |
-| **`MemberListResponse`** | 멤버 목록 응답 | `members` | List<`ProjectMemberResponse`> | 페이징된 멤버 정보 리스트 |
-|  |  | `hasNext`  | Boolean | 다음 페이지 존재 여부 (커서 기반 페이징) |
-|  |  | `nextCursorId`  | Long | 다음 페이지 조회를 위한 커서 ID (마지막 멤버 ID) |
+| **DTO 클래스명**                    | **역할**      | **필드명**        | **타입**                        | **설명**                                          |
+|---------------------------------|-------------|----------------|-------------------------------|-------------------------------------------------|
+| **`MemberInviteAcceptRequest`** | 멤버 초대 수락 요청 | `userId`       | Long                          | 초대 받은 사용자의 ID                                   |
+|                                 |             | `projectId`    | Long                        | 참여할 프로젝트 ID                                     |
+| **`MemberRoleUpdateRequest`**   | 멤버 역할 변경 요청 | `memberRole`   | String                        | 변경할 역할 (`OWNER`/`MANAGER`/`DEVELOPER`/`VIEWER`) |
+| **`ProjectMemberResponse`**     | 멤버 정보 응답    | `id`           | Long                          | `ProjectMember` 고유 ID                           |
+|                                 |             | `userId`       | Long                          | 사용자 ID                                          |
+|                                 |             | `nickname`     | String                        | 사용자 닉네임                                         |
+|                                 |             | `memberRole`   | String                        | 프로젝트 내 역할                                       |
+| **`MemberListResponse`**        | 멤버 목록 응답    | `members`      | List<`ProjectMemberResponse`> | 페이징된 멤버 정보 리스트                                  |
+|                                 |             | `hasNext`      | Boolean                       | 다음 페이지 존재 여부 (커서 기반 페이징)                        |
+|                                 |             | `nextCursorId` | Long                          | 다음 페이지 조회를 위한 커서 ID (마지막 멤버 ID)                 |
 
 ---
 
@@ -85,7 +87,7 @@
 | **`DomainServerUpdateRequest`**  | 서버 정보 수정 요청 | `name`                | String                             | 수정할 서버 이름                              |
 |                                  |             | `healthCheckUrl`      | String                             | 수정할 헬스 체크 URL (수동 입력)                  |
 |                                  |             | `healthCheckInterval` | String                             | 수정할 헬스 체크 주기 (기본 10분)                  |
-|                                  |             | `isHealthCheckActive` | Boolean                             | 수정할 헬스 체크 활성화 여부                       |
+|                                  |             | `isHealthCheckActive` | Boolean                            | 수정할 헬스 체크 활성화 여부                       |
 |                                  |             | `status`              | String                             | 수동으로 변경할 서버 상태                         |
 | **`DomainServerCreateResponse`** | 서버 생성 성공 응답 | `id`                  | Long                               | 생성된 서버 ID                              |
 |                                  |             | `name`                | String                             | 생성된 서버 이름                              |
@@ -97,7 +99,7 @@
 |                                  |             | `status`              | String                             | 수정된 서버 상태                              |
 |                                  |             | `healthCheckUrl`      | String                             | 수정된 헬스 체크 URL                          |
 |                                  |             | `healthCheckInterval` | String                             | 수정된 헬스 체크 주기                           |
-|                                  |             | `isHealthCheckActive` | Boolean                             | 수정된 헬스 체크 활성화 여부                       |
+|                                  |             | `isHealthCheckActive` | Boolean                            | 수정된 헬스 체크 활성화 여부                       |
 |                                  |             | `updatedAt`           | Instant                            | 최종 수정 일시                               |
 | **`DomainServerResponse`**       | 서버 상세 정보 응답 | `id`                  | Long                               | 서버 고유 ID                               |
 |                                  |             | `name`                | String                             | 서버 이름                                  |
@@ -106,13 +108,14 @@
 |                                  |             | `healthCheckUrl`      | String                             | 헬스 체크 URL                              |
 |                                  |             | `healthCheckInterval` | String                             | 헬스 체크 주기                               |
 |                                  |             | `lastCheckedAt`       | Instant                            | 최종 헬스 체크 일시                            |
-|                                  |             | `isHealthCheckActive` | Boolean                             | 헬스 체크 활성화 여부                           |
+|                                  |             | `isHealthCheckActive` | Boolean                            | 헬스 체크 활성화 여부                           |
 |                                  |             | `createdAt`           | Instant                            | 생성 일시                                  |
 |                                  |             | `updatedAt`           | Instant                            | 최종 수정 일시                               |
 | **`DomainServerSimpleResponse`** | 서버 목록 개별 응답 | `id`                  | Long                               | 서버 고유 ID                               |
 |                                  |             | `name`                | String                             | 서버 이름                                  |
 |                                  |             | `slug`                | String                             | 서버 slug (URL 경로용)                      |
 |                                  |             | `status`              | String                             | 현재 상태 (`MOCKING`/`DEPLOYED`/`ERROR` 등) |
+|                                  |             | `unreadNotificationCount` | Integer                            | 도메인 서버 내 모든 미확인 알림 총 개수 (집계 필드)        |
 |                                  |             | `updatedAt`           | Instant                            | 최종 수정 일시                               |
 | **`DomainServerListResponse`**   | 서버 목록 응답    | `data`                | List<`DomainServerSimpleResponse`> | 페이지에 해당하는 서버 목록 리스트                    |
 |                                  |             | `totalPages`          | Integer                            | 전체 페이지 수                               |
@@ -213,3 +216,35 @@
 |  |  | `duplicateCount` | int | 중복으로 인해 스킵된 API 개수                         |
 |  |  | `message` | String | 사용자에게 보여줄 간단한 성공/실패 메시지                    |
 |  |  | `detailedError` | String | 실패 시 상세 에러 로그 (개발자/운영자용)                   |
+
+---
+
+### 10. 알림 관련 DTO
+
+| **DTO 클래스명**                       | **역할**       | **필드명** | **타입**                               | **설명**                                                               |
+|------------------------------------|--------------| --- |--------------------------------------|----------------------------------------------------------------------|
+| **`NotificationDto`**              | 개별 알림 항목     | `notificationId`  | Long                                 | 알림 고유 ID                                                             |
+|                                    |              | `type` | String                               | 알림 유형 (Enum String)                                                  |
+|                                    |              | `title` | String                               | 알림 제목                                                                |
+|                                    |              | `message` | String                               | 상세 알림 내용                                                             |
+|                                    |              | `isRead` | Boolean                              | 읽음 여부                                                                |
+|                                    |              | `createdAt` | Instatnt                             | 알림 생성 시각                                                             |
+|                                    |              | `metadata` | JsonNode                             | 추가 데이터 (JSON 객체)                                                     |
+|                                    |              | `redirectUrl` | String                               | (Front-end 생성용) 알림 클릭 시 이동할 경로 (예: `/projects/{projectId}/settings`) |
+| **`UserNotificationPageResponse`** | 알림 페이지 응답    | `notifications`  | List<`UserNotificationDto`>          | 알림 목록                                                                |
+|                                    |              | `totalUnreadCount` | Integer                              | 다음 페이지 조회를 위한 커서 값                                                   |
+|                                    |              | `nextCursorId` | Long                                 | 총 미확인 알림 개수                                                    |
+|                                    |              | `hasNext` | Boolean                              | 다음 페이지 존재 여부                                                         |
+| **`ServerNotificationSummaryDto`** | 서버 타입별 알림 요약 | `type`  | String                               | 알림 유형 (Enum String)                                                               |
+|                                    |              | `latestNotifications` | List<`NotificationDto`>              | 해당 타입의 최근 10개 알림 목록 (최신순)                                                  |
+|                                    |              | `unreadCount` | Integer                              | 해당 타입 중 읽지 않은 알림 개수                                                    |
+| **`ServerNotificationSummaryResponse`** | 서버 알림 요약 응답 | `serverName`  | String                               | 도메인 서버 이름                                                              |
+|                                    |              | `totalUnreadCount` | Integer                              | 서버 전체의 읽지 않은 알림 총 개수                                                  |
+|                                    |              | `summaries` | List<`ServerNotificationSummaryDto`> | 타입별 요약 목록                                                    |
+| **`HealthCheckFailureLogDto`** | 실패 로그 개별 항목 | `notificationId`  | Long                                 | 알림 ID (로그 기록으로 활용)                                                              |
+|                                    |              | `failedAt` | Instant                              | 헬스 체크 실패 시각 (createdAt과 동일)                                                  |
+|                                    |              | `failureReason` | String | 실패 이유 (예: Timeout,4xx/5xx Response, title 활용)                                                |
+|                                    |              | `metadata` | JsonNode | 실패 상세 데이터 (WebHook ID, 응답 코드 등)                                                |
+| **`HealthCheckFailureLogPageResponse`** | 실패 로그 페이지 응답 | `failures`  | List<`HealthCheckFailureLogDto`>                                 | 실패 로그 목록 (최신순)                                                              |
+|                                    |              | `nextCursorId` | Long                              | 다음 페이지 조회를 위한 커서 값                                                  |
+|                                    |              | `hasNext` | Boolean | 다음 페이지 존재 여부                                                |

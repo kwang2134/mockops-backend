@@ -1,5 +1,6 @@
 package com.mockops.domain.project.service;
 
+import com.mockops.domain.notification.service.NotificationService;
 import com.mockops.domain.project.entity.Project;
 import com.mockops.domain.project.entity.ProjectMember;
 import com.mockops.domain.project.repository.ProjectMemberRepository;
@@ -31,6 +32,7 @@ public class ProjectService {
     private final ProjectMemberService projectMemberService;
     private final UserService userService;
     private final WebhookSecretService webhookSecretService;
+    private final NotificationService notificationService;
 
     public Project getProjectById(Long projectId) {
         return projectRepository.findById(projectId)
@@ -76,7 +78,8 @@ public class ProjectService {
         List<ProjectResponse> projectResponses = projectPage.getContent().stream()
                 .map(project -> {
                     User owner = userService.getUserById(project.getOwnerId());
-                    return ProjectResponse.from(project, owner.getNickname());
+                    Integer unreadNotificationCount = notificationService.getUnreadCountByProject(project);
+                    return ProjectResponse.from(project, owner.getNickname(), unreadNotificationCount);
                 })
                 .collect(Collectors.toList());
 

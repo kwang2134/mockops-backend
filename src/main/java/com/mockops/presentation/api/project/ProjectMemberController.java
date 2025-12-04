@@ -1,13 +1,10 @@
 package com.mockops.presentation.api.project;
 
-import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.project.service.ProjectMemberService;
-import com.mockops.domain.user.entity.User;
-import com.mockops.domain.user.service.UserService;
 import com.mockops.global.common.UnifiedResponse;
 import com.mockops.presentation.api.project.docs.ProjectMemberDocs;
+import com.mockops.presentation.api.project.dto.MemberInviteAcceptRequest;
 import com.mockops.presentation.api.project.dto.project.ProjectMemberResponse;
-import com.mockops.presentation.api.project.dto.projectmember.MemberInviteRequest;
 import com.mockops.presentation.api.project.dto.projectmember.MemberListResponse;
 import com.mockops.presentation.api.project.dto.projectmember.MemberRoleUpdateRequest;
 import jakarta.validation.Valid;
@@ -28,32 +25,28 @@ import org.springframework.web.bind.annotation.*;
 public class ProjectMemberController implements ProjectMemberDocs {
 
     private final ProjectMemberService projectMemberService;
-    private final UserService userService;
 
     /**
-     * 팀원 초대/추가 (VIEWER 고정)
+     * 알림을 통한 초대 수락
      * POST /api/v1/projects/{projectId}/members
-     * 웹 서비스 알림 구현 후 초대 기능 (메일 발송 x)
+     *
+     * 웹 서비스를 통해 알림으로 받은 초대를 수락하는 메서드
+     * 로그인된 사용자가 알림의 초대를 수락하여 프로젝트 멤버로 참여
      */
     @Override
     @PostMapping
-    public ResponseEntity<UnifiedResponse<ProjectMemberResponse>> inviteMember(
+    public ResponseEntity<UnifiedResponse<ProjectMemberResponse>> acceptMember(
             @PathVariable Long projectId,
-            @Valid @RequestBody MemberInviteRequest request,
+            @Valid @RequestBody MemberInviteAcceptRequest request,
             @AuthenticationPrincipal Long userId
     ) {
-        log.info("팀원 초대 요청: projectId={}, email={}, userId={}",
-                projectId, request.email(), userId);
+        log.info("알림을 통한 초대 수락 요청: projectId={}, userId={}, requestUserId={}",
+                projectId, userId, request.userId());
 
-        // 이메일로 사용자 조회
-        User invitedUser = userService.getUserByEmail(request.email());
-
-        // VIEWER 역할로 멤버 추가
-        ProjectMemberResponse response = projectMemberService.inviteMemberWithDetails(
+        ProjectMemberResponse response = projectMemberService.acceptInvitationFromNotification(
                 projectId,
-                userId,
-                invitedUser.getId(),
-                MemberRole.VIEWER
+                request.userId(),
+                userId
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)

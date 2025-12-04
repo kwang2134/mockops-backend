@@ -30,12 +30,12 @@
 
 **Base URL:** `/api/v1/projects/{projectId}/members`
 
-| **#** | **HTTP Method** | **URL** | **설명** | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **1** | `POST` | `/members` | 팀원 초대/추가 (VIEWER 고정) | `PROJECT_MANAGER` | None | `MemberInviteRequest` | `ProjectMemberResponse` |
+| **#** | **HTTP Method** | **URL** | **설명**                    | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
+| --- | --- | --- |---------------------------| --- | --- | --- | --- |
+| **1** | `POST` | `/members` | 팀원 초대 수락 | `MEMBER` | None | `MemberInviteAcceptRequest` | `ProjectMemberResponse` |
 | **2** | `GET` | `/members` | 프로젝트 팀원 목록 조회 (커서 기반 페이징) | `PROJECT_MEMBER` | `size`, `cursorId` | None | `MemberListResponse` |
-| **3** | `PATCH` | `/members/{memberId}/role` | 팀원 역할 변경 (OWNER 제외) | `PROJECT_MANGER` | None | `MemberRoleUpdateRequest` | `ProjectMemberResponse` |
-| **4** | `DELETE` | `/members/{memberId}` | 팀원 제외 (OWNER 제외) | `PROJECT_MANAGER` | None | None | 204 No Content |
+| **3** | `PATCH` | `/members/{memberId}/role` | 팀원 역할 변경 (OWNER 제외)       | `PROJECT_MANGER` | None | `MemberRoleUpdateRequest` | `ProjectMemberResponse` |
+| **4** | `DELETE` | `/members/{memberId}` | 팀원 제외 (OWNER 제외)          | `PROJECT_MANAGER` | None | None | 204 No Content |
 
 ---
 
@@ -118,3 +118,14 @@
 | **1** | `GET`           | `/api/v1/jobs/{jobId}` | 비동기 벌크 작업 상태 조회 (Polling) | `PROJECT_DEVELOPER` | None | None | `JobStatusResponse` |
 
 ---
+
+### 11. 알림 관리 엔드포인트
+
+| **#** | **HTTP Method** | **URL**                                                         | **설명**                                                                    | **인증/인가**       | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
+|-------|-----------------|-----------------------------------------------------------------|---------------------------------------------------------------------------|-----------------| --- |------------| --- |
+| **1** | `GET`           | `/api/v1/notifications/user`                                    | **[사용자 알림]** 현재 사용자에게 귀속된 알림 목록을 최신순으로 조회. (초대장, 시스템 공지 등)                | `AUTHENTICATED` | `cursorId` (Long), `pageSize` (Int) | None       | `UserNotificationPageResponse` |
+| **2** | `PATCH`         | `/api/v1/notifications/{notificationId}/read`                   | **[알림 처리]** 특정 알림을 '읽음' 상태로 변경합니다.                                        | `AUTHENTICATED` | None | None       | None (204 No Content) |
+| **3** | `DELETE`        | `/api/v1/notifications/{notificationId}`                        | **[알림 삭제]** 특정 알림을 삭제합니다. (사용자 귀속 알림은 해당 사용자만 삭제 가능하며, 서버 알림은 프로젝트 멤버 권한 확인 필요)                                        | `AUTHENTICATED` | None | None       | None (204 No Content) |
+| **4** | `GET`           | `/api/v1/notifications/server/{serverId}`                       | **[서버 알림 요약]** 특정 도메인 서버에 귀속된 알림을 타입별로 최근 10개씩 요약 조회합니다.        | `PROJECT_MEMBER`  |None| None       | `ServerNotificationSummaryResponse` |
+| **5** | `GET`           | `/api/v1/notifications/server/{serverId}/health-check-failures` | **[헬스 체크 실패 로그]** 특정 서버의 `HEALTH_CHECK_FAILURE` 알림만 최신순으로 상세 조회합니다. (시간대별 실패 기록 로그 대용)       | `PROJECT_MEMBER`  |`cursorId` (Long), `pageSize` (Int)| None       | `HealthCheckFailureLogPageResponse` |
+

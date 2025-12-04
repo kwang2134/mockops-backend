@@ -1,5 +1,8 @@
 package com.mockops.domain.project.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mockops.domain.notification.entity.NotificationType;
+import com.mockops.domain.notification.service.NotificationService;
 import com.mockops.domain.project.entity.Invitation;
 import com.mockops.domain.project.entity.InvitationStatus;
 import com.mockops.domain.project.entity.Project;
@@ -29,6 +32,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 프로젝트 초대 관련 비즈니스 로직을 처리하는 서비스
@@ -46,6 +51,8 @@ public class InvitationService {
     private final UserService userService;
     private final JwtProvider jwtProvider;
     private final MailService mailService;
+    private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
@@ -66,7 +73,9 @@ public class InvitationService {
 
         // 4. 이미 프로젝트 멤버인지 확인 (이메일로 사용자 찾기)
         User invitedUser = userService.findByEmail(request.email()).orElse(null);
-        if (invitedUser != null) {
+        boolean isExistingUser = invitedUser != null;
+
+        if (isExistingUser) {
             boolean isMember = projectMemberRepository.existsByProjectIdAndUserId(projectId, invitedUser.getId());
             if (isMember) {
                 throw ErrorCode.PROJECT_MEMBER_DUPLICATED.serviceException(
@@ -124,6 +133,34 @@ public class InvitationService {
             log.error("초대 이메일 발송 실패: projectId={}, email={}, error={}",
                 projectId, request.email(), e.getMessage());
             // 이메일 발송 실패해도 초대장은 생성된 상태로 유지
+        }
+
+        // 11. 기존 회원인 경우 서비스 내 알림 생성
+        if (isExistingUser) {
+            try {
+                // 알림 metadata 생성
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("projectId", projectId);
+                metadata.put("projectName", project.getName());
+                metadata.put("invitationId", invitation.getId());
+                metadata.put("inviterName", inviter.getNickname());
+                String metadataJson = objectMapper.writeValueAsString(metadata);
+
+                // 알림 생성
+                notificationService.createNotification(
+                    invitedUser.getId(),  // recipientUserId
+                    null,  // domainServerId (null)
+                    NotificationType.MEMBER_INVITATION_RECEIVED,
+                    "프로젝트 초대",
+                    inviter.getNickname() + "님이 '" + project.getName() + "' 프로젝트에 초대했습니다.",
+                    metadataJson
+                );
+                log.info("초대 알림 생성 성공: projectId={}, userId={}", projectId, invitedUser.getId());
+            } catch (Exception e) {
+                log.error("초대 알림 생성 실패: projectId={}, userId={}, error={}",
+                    projectId, invitedUser.getId(), e.getMessage());
+                // 알림 생성 실패해도 초대 프로세스는 계속 진행
+            }
         }
 
         return InvitationCreateResponse.from(invitation);
@@ -211,15 +248,7 @@ public class InvitationService {
             }
         }
 
-        // 5. 현재 사용자의 이메일과 초대 이메일 일치 확인
-        User currentUser = userService.getUserById(currentUserId);
-        if (!currentUser.getEmail().equals(email)) {
-            throw ErrorCode.PERMISSION_DENIED.serviceException(
-                "초대받은 이메일과 현재 로그인한 이메일이 다릅니다."
-            );
-        }
-
-        // 6. 이미 프로젝트 멤버인지 확인
+        // 5. 이미 프로젝트 멤버인지 확인
         boolean isMember = projectMemberRepository.existsByProjectIdAndUserId(projectId, currentUserId);
         if (isMember) {
             throw ErrorCode.PROJECT_MEMBER_DUPLICATED.serviceException(
@@ -227,7 +256,7 @@ public class InvitationService {
             );
         }
 
-        // 7. 프로젝트 멤버 추가
+        // 6. 프로젝트 멤버 추가
         ProjectMember newMember = ProjectMember.builder()
             .projectId(projectId)
             .userId(currentUserId)
@@ -236,7 +265,7 @@ public class InvitationService {
 
         projectMemberRepository.save(newMember);
 
-        // 8. 초대장 상태 변경
+        // 7. 초대장 상태 변경
         invitation.accept();
         invitationRepository.save(invitation);
 
