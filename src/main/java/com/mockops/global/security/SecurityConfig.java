@@ -12,6 +12,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -30,11 +35,44 @@ public class SecurityConfig {
             "/docs/**",
     };
 
+    /**
+     * CORS 설정
+     * MockOps 서비스 자체 프론트엔드만 허용
+     * /mock/** 경로는 DynamicCorsFilter가 동적으로 처리
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration serviceConfig = new CorsConfiguration();
+
+        // MockOps 프론트엔드 허용
+        serviceConfig.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173"
+        ));
+
+        serviceConfig.setAllowedMethods(List.of("*"));
+        serviceConfig.setAllowedHeaders(List.of("*"));
+        serviceConfig.setAllowCredentials(true);  // 쿠키 전송 허용 (CRITICAL!)
+        serviceConfig.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
+        serviceConfig.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        // MockOps 서비스 자체 API에만 적용 (/mock/** 제외!)
+        source.registerCorsConfiguration("/api/**", serviceConfig);
+        source.registerCorsConfiguration("/login/**", serviceConfig);
+        source.registerCorsConfiguration("/public/**", serviceConfig);
+
+        // /mock/** 는 DynamicCorsFilter가 프로젝트별로 동적 처리하므로 여기서 설정 안 함
+
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)  // CORS는 나중에 동적으로 설정
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // CORS 설정 적용
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )

@@ -1,6 +1,7 @@
 package com.mockops.presentation.api.user.docs;
 
 import com.mockops.global.common.UnifiedResponse;
+import com.mockops.presentation.api.user.dto.AccessTokenResponse;
 import com.mockops.presentation.api.user.dto.TokenResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,15 +21,16 @@ public interface AuthDocs {
 
     @Operation(
             summary = "Access Token 갱신",
-            description = "Refresh Token을 사용하여 새로운 Access Token과 Refresh Token을 발급합니다. " +
-                    "Refresh Token은 HttpOnly Cookie로 전달받으며, 새로운 Refresh Token도 Cookie로 응답됩니다. " +
+            description = "Refresh Token을 사용하여 새로운 Access Token을 발급합니다. " +
+                    "Refresh Token은 HttpOnly Cookie로 전달받으며, 새로운 Refresh Token도 HttpOnly Cookie로만 응답됩니다. " +
+                    "응답 Body에는 Access Token만 포함되며, Refresh Token은 쿠키에서만 관리됩니다. " +
                     "Token Rotation 방식을 사용하여 보안을 강화합니다."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "토큰 갱신 성공",
-                    content = @Content(schema = @Schema(implementation = TokenResponse.class))
+                    description = "토큰 갱신 성공 (응답 Body: Access Token만 포함, Refresh Token은 HttpOnly Cookie로 설정)",
+                    content = @Content(schema = @Schema(implementation = AccessTokenResponse.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -36,7 +38,7 @@ public interface AuthDocs {
                     content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
             )
     })
-    ResponseEntity<UnifiedResponse<TokenResponse>> refreshToken(
+    ResponseEntity<UnifiedResponse<AccessTokenResponse>> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response
     );

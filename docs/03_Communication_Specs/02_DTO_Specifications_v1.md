@@ -6,8 +6,9 @@
 
 | **DTO 클래스명** | **역할** | **필드명** | **타입** | **설명** |
 | --- | --- | --- | --- | --- |
-| **`TokenResponse`** | Access/Refresh 토큰 응답 | `accessToken` | String | 실제 API 호출에 사용되는 JWT |
+| **`TokenResponse`** | Access/Refresh 토큰 응답 (OAuth 로그인) | `accessToken` | String | 실제 API 호출에 사용되는 JWT |
 |  |  | `refreshToken` | String | Access Token 갱신에 사용되는 토큰 |
+| **`AccessTokenResponse`** | Access Token 갱신 응답 (Refresh Token은 쿠키로만 응답) | `accessToken` | String | 실제 API 호출에 사용되는 JWT |
 | **`UserDetailResponse`** | 사용자 정보 응답 | `id` | Long | 사용자 고유 ID |
 |  |  | `email` | String | 사용자 이메일 |
 |  |  | `nickname` | String | 사용자 닉네임 |

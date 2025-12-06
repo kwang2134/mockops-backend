@@ -7,7 +7,7 @@
 | **#** | **HTTP Method** | **URL** | **설명** | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **1** | `GET` | `/api/v1/auth/{provider}/login` | OAuth 로그인 시작 | `Public` | None | None | 302 Redirect |
-| **2** | `GET` | `/api/v1/auth/token/refresh` | Access Token 갱신 | `REFRESH_TOKEN` | None | None | `TokenResponse` |
+| **2** | `GET` | `/api/v1/auth/token/refresh` | Access Token 갱신 (Refresh Token은 HttpOnly Cookie로만 응답) | `REFRESH_TOKEN` | None | None | `AccessTokenResponse` |
 | **3** | `GET` | `/api/v1/users/me` | 사용자 본인 정보 조회 | `MEMBER` | None | None | `UserDetailResponse` |
 | **4** | `PATCH` | `/api/v1/users/me/nickname` | 닉네임 수정 | `MEMBER` | None | `UserUpdateNicknameRequest` | `UserDetailResponse` |
 | **5** | `POST`  | `/api/v1/auth/logout` | 로그아웃 | `MEMBER` | None | None | 204 No Content |
