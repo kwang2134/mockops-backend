@@ -226,7 +226,7 @@ public class MockApiService {
         // 기존 캐시 삭제 (변경 전 엔드포인트 경로 기준)
         mockApiCachePort.evictMockApi(
             server.getProjectId(),
-            server.getName(),
+            server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
             mockApi.getHttpMethod(),
             mockApi.getEndpointPath()
         );
@@ -249,7 +249,7 @@ public class MockApiService {
         if (!mockApi.getEndpointPath().equals(endpointPath) || mockApi.getHttpMethod() != httpMethod) {
             mockApiCachePort.evictMockApi(
                 server.getProjectId(),
-                server.getName(),
+                server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
                 httpMethod,
                 endpointPath
             );
@@ -278,7 +278,7 @@ public class MockApiService {
         // 캐시 삭제
         mockApiCachePort.evictMockApi(
             server.getProjectId(),
-            server.getName(),
+            server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
             mockApi.getHttpMethod(),
             mockApi.getEndpointPath()
         );
@@ -315,7 +315,7 @@ public class MockApiService {
         // 캐시 삭제 (활성화 상태 변경으로 인한 캐시 무효화)
         mockApiCachePort.evictMockApi(
             server.getProjectId(),
-            server.getName(),
+            server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
             mockApi.getHttpMethod(),
             mockApi.getEndpointPath()
         );

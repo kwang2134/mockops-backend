@@ -80,8 +80,8 @@ public class MockOpsHandlerMapping implements HandlerMapping, Ordered {
             // 2-1. 서버 조회
             var server = domainServerService.getServerByProjectIdAndSlug(projectId, serverSlug);
 
-            // 2-2. 활성화된 Mock API 목록 조회
-            List<MockApi> mockApis = mockApiRepository.findByServerIdAndIsActiveTrue(server.getId());
+            // 2-2. Mock API 목록 조회 (활성화 여부와 관계없이)
+            List<MockApi> mockApis = mockApiRepository.findByServerId(server.getId());
 
             // 2-3. AntPathMatcher로 패턴 매칭
             MockApi matchedMock = null;
@@ -98,6 +98,16 @@ public class MockOpsHandlerMapping implements HandlerMapping, Ordered {
                 log.warn("매칭되는 Mock API 없음: projectId={}, serverSlug={}, path={}, method={}",
                     projectId, serverSlug, apiPath, httpMethod);
                 return null;
+            }
+
+            // 2-4. 비활성화된 Mock API 확인
+            if (!matchedMock.getIsActive()) {
+                log.warn("비활성화된 Mock API 요청: projectId={}, serverSlug={}, path={}, method={}, mockApiId={}",
+                    projectId, serverSlug, apiPath, httpMethod, matchedMock.getId());
+                InactiveMockApiHandler inactiveHandler = new InactiveMockApiHandler(
+                    projectId, serverSlug, requestPath, matchedMock.getId()
+                );
+                return new HandlerExecutionChain(inactiveHandler);
             }
 
             // 2-4. 캐시에 저장
