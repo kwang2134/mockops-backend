@@ -29,6 +29,7 @@
 | **`ProjectCreateResponse`** | 프로젝트 생성 성공 응답              | `id`              | Long                    | 생성된 프로젝트 ID                 |
 |                             |                            | `name`            | String                  | 프로젝트 이름                     |
 |                             |                            | `createdAt`       | Instant                 | 생성 일시                       |
+|                             |                            | `webhookSecret`   | String                  | 생성된 Webhook Secret (평문, 생성 시에만 노출) |
 | **`ProjectUpdateResponse`** | 프로젝트 정보 수정 성공 응답           | `id`              | Long                    | 수정된 프로젝트 ID                 |
 |                             |                            | `updatedAt`       | Instant                 | 최종 수정 일시                    |
 | **`ProjectDetailResponse`** | 프로젝트 상세 정보 응답              | `id`              | Long                    | 프로젝트 고유 ID                  |

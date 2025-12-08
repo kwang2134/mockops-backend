@@ -62,7 +62,11 @@ public class WebhookSecretService {
      * @return 생성된 WebhookSecret
      */
     @Transactional
-    public WebhookSecret createWebhookSecret(Long projectId) {
+    /**
+     * WebhookSecret 생성 (평문 반환)
+     * 프로젝트 생성 시 사용 - 평문 secret을 반환하여 사용자에게 제공
+     */
+    public WebhookSecretCreateResult createWebhookSecretWithRaw(Long projectId) {
         // 이미 존재하는지 확인
         if (webhookSecretRepository.existsByProjectId(projectId)) {
             throw ErrorCode.WEBHOOK_SECRET_ALREADY_EXISTS.domainException(
@@ -82,9 +86,21 @@ public class WebhookSecretService {
 
         WebhookSecret saved = webhookSecretRepository.save(webhookSecret);
 
-        log.info("WebhookSecret 생성 완료: projectId={}, webhookSecretId={}", projectId, saved.getId());
+        log.info("WebhookSecret 생성 완료 (평문 포함): projectId={}, webhookSecretId={}", projectId, saved.getId());
 
-        return saved;
+        return new WebhookSecretCreateResult(saved, rawSecretKey);
+    }
+
+    /**
+     * WebhookSecret 생성 결과 (평문 포함)
+     */
+    public record WebhookSecretCreateResult(WebhookSecret webhookSecret, String rawSecretKey) {}
+
+    /**
+     * WebhookSecret 생성 (내부용 - 평문 반환 안 함)
+     */
+    public WebhookSecret createWebhookSecret(Long projectId) {
+        return createWebhookSecretWithRaw(projectId).webhookSecret();
     }
 
     /**

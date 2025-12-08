@@ -120,7 +120,7 @@ public class ProjectService {
     /**
      * 프로젝트 생성 - ProjectCreateResponse 반환
      * 생성자를 자동으로 OWNER로 추가
-     * WebhookSecret 자동 생성
+     * WebhookSecret 자동 생성 (평문 반환)
      */
     @Transactional
     public ProjectCreateResponse createProject(String name, String description, Long ownerId, String slackWebhookUrl) {
@@ -142,13 +142,15 @@ public class ProjectService {
         // 생성자를 OWNER로 자동 추가
         projectMemberService.addProjectMember(savedProject.getId(), ownerId, MemberRole.OWNER);
 
-        // WebhookSecret 자동 생성
-        webhookSecretService.createWebhookSecret(savedProject.getId());
+        // WebhookSecret 자동 생성 (평문 반환)
+        var webhookSecretResult = webhookSecretService.createWebhookSecretWithRaw(savedProject.getId());
+        String rawWebhookSecret = webhookSecretResult.rawSecretKey();
 
         log.info("프로젝트 생성 완료 (WebhookSecret 포함): projectId={}, ownerId={}, name={}",
                 savedProject.getId(), ownerId, name);
 
-        return ProjectCreateResponse.from(savedProject);
+        // Webhook Secret 평문 포함하여 반환 (생성 시에만 노출)
+        return ProjectCreateResponse.from(savedProject, rawWebhookSecret);
     }
 
     @Transactional
