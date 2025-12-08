@@ -214,6 +214,7 @@ public class OpenApiParserService {
 
     /**
      * 응답 본문 추출
+     * 우선순위: example (단수) > examples (복수) > schema
      */
     @SuppressWarnings("unchecked")
     private String extractResponseBody(Map<String, Object> responseObj) {
@@ -228,15 +229,32 @@ public class OpenApiParserService {
                 return "{}";
             }
 
-            // example이 있으면 사용
+            // 1. example (단수형) - OpenAPI 3.0 스타일
             Object example = applicationJson.get("example");
             if (example != null) {
+                log.debug("example (단수형) 사용");
                 return objectMapper.writeValueAsString(example);
             }
 
-            // schema만 있으면 기본 응답 생성
+            // 2. examples (복수형) - OpenAPI 3.0 권장 스타일
+            Map<String, Object> examples = (Map<String, Object>) applicationJson.get("examples");
+            if (examples != null && !examples.isEmpty()) {
+                // 첫 번째 example의 value 사용
+                Map.Entry<String, Object> firstExample = examples.entrySet().iterator().next();
+                String exampleKey = firstExample.getKey();
+                Map<String, Object> exampleObj = (Map<String, Object>) firstExample.getValue();
+
+                Object value = exampleObj.get("value");
+                if (value != null) {
+                    log.debug("examples (복수형) 사용: exampleKey={}", exampleKey);
+                    return objectMapper.writeValueAsString(value);
+                }
+            }
+
+            // 3. schema - 예시가 없을 때 fallback
             Object schema = applicationJson.get("schema");
             if (schema != null) {
+                log.debug("schema fallback 사용 (example 없음)");
                 return objectMapper.writeValueAsString(schema);
             }
 
