@@ -101,7 +101,12 @@ public class ProjectService {
 
         Project project = getProjectById(projectId);
         User owner = userService.getUserById(project.getOwnerId());
-        return ProjectDetailResponse.from(project, owner);
+
+        // 현재 유저의 프로젝트 멤버 권한 조회
+        ProjectMember currentMember = projectMemberService.getProjectMemberByProjectIdAndUserId(projectId, currentUserId);
+        MemberRole currentUserMemberRole = currentMember.getMemberRole();
+
+        return ProjectDetailResponse.from(project, owner, currentUserMemberRole);
     }
 
     /**

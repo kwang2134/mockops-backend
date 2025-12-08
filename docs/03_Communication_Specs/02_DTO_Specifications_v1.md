@@ -38,6 +38,7 @@
 |                             |                            | `ownerId`         | Long                    | 생성자 사용자 ID                  |
 |                             |                            | `ownerNickName`   | String                  | 생성자(PO) 닉네임                 |
 |                             |                            | `slackWebhookUrl` | String                  | 슬랙 웹훅 URL                   |
+|                             |                            | `currentUserMemberRole` | String            | 현재 로그인된 유저의 프로젝트 멤버 권한 (`OWNER`/`MANAGER`/`DEVELOPER`/`VIEWER`) |
 |                             |                            | `createdAt`       | Instant                 | 생성 일시                       |
 |                             |                            | `updatedAt`       | Instant                 | 최종 수정 일시                    |
 | **`ProjectResponse`**       | 프로젝트 목록 개별 응답              | `id`              | Long                    | 프로젝트 고유 ID                  |

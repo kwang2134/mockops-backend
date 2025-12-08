@@ -75,7 +75,9 @@ public interface ProjectDocs {
     @Operation(
             summary = "프로젝트 상세 조회",
             description = "특정 프로젝트의 상세 정보를 조회합니다. " +
-                    "프로젝트 멤버만 조회할 수 있으며, 프로젝트의 기본 정보와 설정, 통계 등을 포함합니다."
+                    "프로젝트 멤버만 조회할 수 있으며, 프로젝트의 기본 정보와 설정, 통계 등을 포함합니다. " +
+                    "응답에는 현재 로그인된 사용자의 프로젝트 멤버 권한(currentUserMemberRole)이 포함되어, " +
+                    "프론트엔드에서 권한별 UI 조건부 렌더링(수정/삭제 버튼 등)에 활용할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(

@@ -20,7 +20,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **1** | `POST` | `/api/v1/projects` | 프로젝트 생성 | `MEMBER` | None | `ProjectCreateRequest` | `ProjectCreateResponse` |
 | **2** | `GET` | `/api/v1/projects` | 내 프로젝트 목록 조회 (페이지 기반 offset 페이징) | `MEMBER` | `page` (페이지  번호), `size` (페이지당 개수, 기본 10개) | None | `ProjectPageResponse` |
-| **3** | `GET` | `/api/v1/projects/{projectId}` | 프로젝트 상세 조회 | `PROJECT_MEMBER` | None | None | `ProjectDetailResponse` |
+| **3** | `GET` | `/api/v1/projects/{projectId}` | 프로젝트 상세 조회 (현재 유저의 권한 포함) | `PROJECT_MEMBER` | None | None | `ProjectDetailResponse` |
 | **4** | `PATCH` | `/api/v1/projects/{projectId}` | 프로젝트 정보 수정 | `PROJECT_OWNER` | None | `ProjectUpdateRequest` | `ProjectUpdateResponse` |
 | **5** | `DELETE` | `/api/v1/projects/{projectId}` | 프로젝트 삭제 | `PROJECT_OWNER` | None | None | 204 No Content |
 
