@@ -1,7 +1,7 @@
 package com.mockops.domain.webhook.service;
 
-import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.domain.project.role.MemberRole;
+import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.domain.webhook.entity.WebhookSecret;
 import com.mockops.domain.webhook.repository.WebhookSecretRepository;
 import com.mockops.global.exception.ErrorCode;
@@ -36,8 +36,8 @@ public class WebhookSecretService {
      * @return WebhookSecret 엔티티
      */
     public WebhookSecret getWebhookSecretByProjectId(Long projectId, Long currentUserId) {
-        // 권한 검증: OWNER만 조회 가능
-        projectMemberService.validateOwner(projectId, currentUserId);
+        // 권한 검증: DEVELOPER 이상 조회 가능 (JWT 발급 기능만 허용)
+        projectMemberService.validateMemberPermission(projectId, currentUserId, MemberRole.DEVELOPER);
 
         return webhookSecretRepository.findByProjectId(projectId)
                 .orElseThrow(() -> ErrorCode.WEBHOOK_SECRET_NOT_FOUND.domainException(
