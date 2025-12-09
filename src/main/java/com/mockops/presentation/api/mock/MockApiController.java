@@ -107,7 +107,7 @@ public class MockApiController implements MockApiDocs {
 
         MockApiBulkResponse response = mockApiService.createMockApisFromFile(serverId, file, userId);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
             .body(UnifiedResponse.success(response));
     }
 
