@@ -1,5 +1,6 @@
 package com.mockops.infrastructure.mail;
 
+import com.mockops.domain.project.infrastructure.MailServicePort;
 import com.mockops.global.exception.ErrorCode;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -20,7 +21,7 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MailService {
+public class MailService implements MailServicePort {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;

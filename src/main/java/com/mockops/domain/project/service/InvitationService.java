@@ -1,12 +1,12 @@
 package com.mockops.domain.project.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mockops.domain.notification.entity.NotificationType;
 import com.mockops.domain.notification.service.NotificationService;
 import com.mockops.domain.project.entity.Invitation;
 import com.mockops.domain.project.entity.InvitationStatus;
 import com.mockops.domain.project.entity.Project;
 import com.mockops.domain.project.entity.ProjectMember;
+import com.mockops.domain.project.event.InvitationSendEvent;
 import com.mockops.domain.project.repository.InvitationRepository;
 import com.mockops.domain.project.repository.ProjectMemberRepository;
 import com.mockops.domain.project.role.MemberRole;
@@ -14,7 +14,6 @@ import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.service.UserService;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.global.security.JwtProvider;
-import com.mockops.infrastructure.mail.MailService;
 import com.mockops.presentation.api.project.dto.invitation.InvitationCreateRequest;
 import com.mockops.presentation.api.project.dto.invitation.InvitationCreateResponse;
 import com.mockops.presentation.api.project.dto.invitation.InvitationInfo;
@@ -22,6 +21,7 @@ import com.mockops.presentation.api.project.dto.invitation.PagedInvitationListRe
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,8 +32,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 프로젝트 초대 관련 비즈니스 로직을 처리하는 서비스
@@ -50,7 +48,7 @@ public class InvitationService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserService userService;
     private final JwtProvider jwtProvider;
-    private final MailService mailService;
+    private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
@@ -119,50 +117,23 @@ public class InvitationService {
         // 9. 초대 링크 생성
         String invitationLink = frontendUrl + "/invitations/accept?token=" + token;
 
-        // 10. 이메일 발송
-        try {
-            mailService.sendProjectInvitationEmail(
+        // 10. 이메일 발송 및 알림 생성 이벤트 발행
+        InvitationSendEvent event = new InvitationSendEvent(
+                this,
+                invitation.getId(),
                 request.email(),
                 inviter.getNickname(),
                 project.getName(),
                 invitationLink,
-                7 // 7일
-            );
-            log.info("초대 이메일 발송 성공: projectId={}, email={}", projectId, request.email());
-        } catch (Exception e) {
-            log.error("초대 이메일 발송 실패: projectId={}, email={}, error={}",
-                projectId, request.email(), e.getMessage());
-            // 이메일 발송 실패해도 초대장은 생성된 상태로 유지
-        }
+                request.memberRole(),
+                invitedUser != null ? invitedUser.getId() : null,
+                projectId
+        );
+        eventPublisher.publishEvent(event);
 
-        // 11. 기존 회원인 경우 서비스 내 알림 생성
-        if (isExistingUser) {
-            try {
-                // 알림 metadata 생성
-                Map<String, Object> metadata = new HashMap<>();
-                metadata.put("projectId", projectId);
-                metadata.put("projectName", project.getName());
-                metadata.put("invitationId", invitation.getId());
-                metadata.put("inviterName", inviter.getNickname());
-                String metadataJson = objectMapper.writeValueAsString(metadata);
+        log.info("InvitationSendEvent 발행 완료: invitationId={}", invitation.getId());
 
-                // 알림 생성
-                notificationService.createNotification(
-                    invitedUser.getId(),  // recipientUserId
-                    null,  // domainServerId (null)
-                    NotificationType.MEMBER_INVITATION_RECEIVED,
-                    "프로젝트 초대",
-                    inviter.getNickname() + "님이 '" + project.getName() + "' 프로젝트에 초대했습니다.",
-                    metadataJson
-                );
-                log.info("초대 알림 생성 성공: projectId={}, userId={}", projectId, invitedUser.getId());
-            } catch (Exception e) {
-                log.error("초대 알림 생성 실패: projectId={}, userId={}, error={}",
-                    projectId, invitedUser.getId(), e.getMessage());
-                // 알림 생성 실패해도 초대 프로세스는 계속 진행
-            }
-        }
-
+        // 11. 즉시 응답 반환
         return InvitationCreateResponse.from(invitation);
     }
 
