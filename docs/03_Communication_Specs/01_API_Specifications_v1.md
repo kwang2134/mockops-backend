@@ -30,12 +30,12 @@
 
 **Base URL:** `/api/v1/projects/{projectId}/members`
 
-| **#** | **HTTP Method** | **URL** | **설명**                    | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
-| --- | --- | --- |---------------------------| --- | --- | --- | --- |
-| **1** | `POST` | `/members` | 팀원 초대 수락 | `MEMBER` | None | `MemberInviteAcceptRequest` | `ProjectMemberResponse` |
-| **2** | `GET` | `/members` | 프로젝트 팀원 목록 조회 (커서 기반 페이징) | `PROJECT_MEMBER` | `size`, `cursorId` | None | `MemberListResponse` |
-| **3** | `PATCH` | `/members/{memberId}/role` | 팀원 역할 변경 (OWNER 제외)       | `PROJECT_MANGER` | None | `MemberRoleUpdateRequest` | `ProjectMemberResponse` |
-| **4** | `DELETE` | `/members/{memberId}` | 팀원 제외 (OWNER 제외)          | `PROJECT_MANAGER` | None | None | 204 No Content |
+| **#** | **HTTP Method** | **URL** | **설명**                        | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
+| --- | --- | --- |-------------------------------| --- | --- | --- | --- |
+| **1** | `POST` | `/members` | 팀원 초대 수락                      | `MEMBER` | None | `MemberInviteAcceptRequest` | `ProjectMemberResponse` |
+| **2** | `GET` | `/members` | 프로젝트 팀원 목록 조회 (offset 기반 페이징) | `PROJECT_MEMBER` | `size`, `offset` | None | `MemberListResponse` |
+| **3** | `PATCH` | `/members/{memberId}/role` | 팀원 역할 변경 (OWNER 제외)           | `PROJECT_MANGER` | None | `MemberRoleUpdateRequest` | `ProjectMemberResponse` |
+| **4** | `DELETE` | `/members/{memberId}` | 팀원 제외 (OWNER 제외)              | `PROJECT_MANAGER` | None | None | 204 No Content |
 
 ---
 
@@ -46,7 +46,8 @@
 | **#** | **HTTP Method** | **URL** | **설명** | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO** |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **1** | `POST` | `/cors` | 허용 Origin 추가 | `PROJECT_DEVELOPER` | None | `CorsOriginRequest` | `CorsOriginResponse` |
-| **2** | `DELETE` | `/cors/{corsId}` | 허용 Origin 삭제 | `PROJECT_DEVELOPER` | None | None | 204 No Content |
+| **2** | `GET` | `/cors` | 허용 Origin 목록 조회 | `PROJECT_MEMBER` | None | None | `List<CorsOriginResponse>` |
+| **3** | `DELETE` | `/cors/{corsId}` | 허용 Origin 삭제 | `PROJECT_DEVELOPER` | None | None | 204 No Content |
 
 ---
 
@@ -67,15 +68,15 @@
 
 **Base URL:** `/api/v1/projects/{projectId}/servers/{serverId}/mocks`
 
-| **#** | **HTTP Method** | **URL** | **설명** | **인증/인가** | **쿼리 파라미터** | **요청 DTO** | **응답 DTO**              |
-| --- | --- | --- | --- | --- | --- | --- |-------------------------|
-| **1** | `POST` | `/mocks` | Mock API 생성 (개별) | `PROJECT_DEVELOPER` | None | `MockApiCreateRequest` | `MockApiCreateResponse`       |
-| **2** | `POST` | `/mocks/upload` | YAML 파일 업로드 및 일괄 처리 | `PROJECT_DEVELOPER` | None | `MultipartFile` | `MockApiBulkResponse`   |
-| **3** | `GET` | `/mocks` | Mock API 목록 조회 (커서 기반) | `PROJECT_MEMBER` | `size`, `cursorId` | None | `MockApiGroupResponse`  |
-| **4** | `GET` | `/mocks/{mockId}` | Mock API 상세 조회 | `PROJECT_MEMBER` | None | None | `MockApiDetailResponse` |
-| **5** | `PATCH` | `/mocks/{mockId}` | Mock API 수정 | `PROJECT_DEVELOPER` | None | `MockApiUpdateRequest` | `MockApiUpdateResponse`       |
-| **6** | `DELETE` | `/mocks/{mockId}` | Mock API 삭제 | `PROJECT_DEVELOPER` | None | None | 204 No Content          |
-| **7** | `GET` | `/api/v1/servers/{serverId}/mock-apis/active-job` | 서버의 진행 중인 Job 조회 | `PROJECT_DEVELOPER` | None | None | `JobStatusResponse` |
+| **#** | **HTTP Method** | **URL** | **설명** | **인증/인가** | **쿼리 파라미터**                    | **요청 DTO** | **응답 DTO**              |
+| --- | --- | --- | --- | --- |--------------------------------| --- |-------------------------|
+| **1** | `POST` | `/mocks` | Mock API 생성 (개별) | `PROJECT_DEVELOPER` | None                           | `MockApiCreateRequest` | `MockApiCreateResponse`       |
+| **2** | `POST` | `/mocks/upload` | YAML 파일 업로드 및 일괄 처리 | `PROJECT_DEVELOPER` | None                           | `MultipartFile` | `MockApiBulkResponse`   |
+| **3** | `GET` | `/mocks` | Mock API 목록 조회 (커서 기반) | `PROJECT_MEMBER` | `size`, `cursorId`, `cursorName` | None | `MockApiGroupResponse`  |
+| **4** | `GET` | `/mocks/{mockId}` | Mock API 상세 조회 | `PROJECT_MEMBER` | None                           | None | `MockApiDetailResponse` |
+| **5** | `PATCH` | `/mocks/{mockId}` | Mock API 수정 | `PROJECT_DEVELOPER` | None                           | `MockApiUpdateRequest` | `MockApiUpdateResponse`       |
+| **6** | `DELETE` | `/mocks/{mockId}` | Mock API 삭제 | `PROJECT_DEVELOPER` | None                           | None | 204 No Content          |
+| **7** | `GET` | `/api/v1/servers/{serverId}/mock-apis/active-job` | 서버의 진행 중인 Job 조회 | `PROJECT_DEVELOPER` | None                           | None | `JobStatusResponse` |
 
 ---
 

@@ -78,6 +78,7 @@
 | **`CorsOriginRequest`** | Origin 추가 요청 | `originUrl` | String | 허용할 Origin URL |
 | **`CorsOriginResponse`** | Origin 정보 응답 | `id` | Long | `ProjectCorsOrigin` 고유 ID |
 |  |  | `originUrl` | String | 허용된 Origin URL |
+|  |  | `createdAt` | Instant | CORS Origin 생성 일시 |
 
 ---
 
