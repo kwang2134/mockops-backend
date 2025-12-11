@@ -65,8 +65,8 @@ public interface ProjectMemberDocs {
     @Operation(
             summary = "프로젝트 팀원 목록 조회",
             description = "프로젝트에 속한 모든 팀원 목록을 조회합니다. " +
-                    "커서 기반 페이지네이션을 사용하며, 각 멤버의 정보와 권한을 포함합니다. " +
-                    "프로젝트 멤버만 조회할 수 있습니다."
+                    "Offset 기반 페이지네이션을 사용하며, 권한 순서(OWNER → MANAGER → DEVELOPER → VIEWER)로 정렬됩니다. " +
+                    "각 멤버의 정보와 권한을 포함하며, 프로젝트 멤버만 조회할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -95,8 +95,8 @@ public interface ProjectMemberDocs {
             @PathVariable Long projectId,
             @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "커서 ID (다음 페이지 조회 시 마지막 멤버 ID)", example = "123")
-            @RequestParam(required = false) Long cursorId,
+            @Parameter(description = "오프셋 (건너뛸 항목 수, 다음 페이지 조회 시 사용)", example = "0")
+            @RequestParam(required = false) Integer offset,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     );
 
