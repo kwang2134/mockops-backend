@@ -23,14 +23,14 @@ public interface DomainServerDocs {
     @Operation(
             summary = "프로젝트의 서버 목록 조회",
             description = "특정 프로젝트에 속한 모든 도메인 서버 목록을 페이지 단위로 조회합니다. " +
-                    "각 서버의 상태(MOCKING, PENDING, DEPLOY, ERROR), 헬스체크 설정 등의 정보를 포함합니다. " +
+                    "각 서버의 기본 정보(이름, slug, 상태)와 미확인 알림 개수를 포함합니다. " +
                     "프로젝트 멤버만 조회할 수 있습니다."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "서버 목록 조회 성공",
-                    content = @Content(schema = @Schema(implementation = DomainServerResponse.class))
+                    content = @Content(schema = @Schema(implementation = DomainServerSimpleResponse.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -48,7 +48,7 @@ public interface DomainServerDocs {
                     content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
             )
     })
-    ResponseEntity<UnifiedResponse<Page<DomainServerResponse>>> getServersByProject(
+    ResponseEntity<UnifiedResponse<Page<DomainServerSimpleResponse>>> getServersByProject(
             @Parameter(description = "프로젝트 ID", example = "1")
             @PathVariable Long projectId,
             @Parameter(description = "페이지 정보 (page, size, sort)", example = "page=0&size=20&sort=id,desc")

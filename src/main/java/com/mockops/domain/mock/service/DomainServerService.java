@@ -4,11 +4,13 @@ import com.mockops.domain.healthcheck.service.HealthCheckService;
 import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.ServerStatus;
 import com.mockops.domain.mock.repository.DomainServerRepository;
+import com.mockops.domain.notification.repository.NotificationRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.presentation.api.mock.dto.domainserver.DomainServerCreateResponse;
 import com.mockops.presentation.api.mock.dto.domainserver.DomainServerResponse;
+import com.mockops.presentation.api.mock.dto.domainserver.DomainServerSimpleResponse;
 import com.mockops.presentation.api.mock.dto.domainserver.DomainServerUpdateResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ public class DomainServerService {
     private final DomainServerRepository domainServerRepository;
     private final ProjectMemberService projectMemberService;
     private final HealthCheckService healthCheckService;
+    private final NotificationRepository notificationRepository;
 
     /**
      * 서버 ID로 조회
@@ -60,14 +63,19 @@ public class DomainServerService {
     }
 
     /**
-     * 프로젝트의 서버 목록 조회 (페이징) - DTO 반환
+     * 프로젝트의 서버 목록 조회 (페이징) - DomainServerSimpleResponse 반환 (미확인 알림 개수 포함)
      */
-    public Page<DomainServerResponse> getServersByProjectWithResponse(Long projectId, Long currentUserId, Pageable pageable) {
+    public Page<DomainServerSimpleResponse> getServersByProjectWithResponse(Long projectId, Long currentUserId, Pageable pageable) {
         // 권한 검증: 프로젝트 멤버만 조회 가능
         projectMemberService.validateMemberPermission(projectId, currentUserId, MemberRole.VIEWER);
 
         Page<DomainServer> servers = domainServerRepository.findByProjectId(projectId, pageable);
-        return servers.map(DomainServerResponse::from);
+
+        // 각 서버별로 미확인 알림 개수를 조회하여 DomainServerSimpleResponse로 변환
+        return servers.map(server -> {
+            Integer unreadCount = notificationRepository.countUnreadByDomainServerId(server.getId());
+            return DomainServerSimpleResponse.from(server, unreadCount);
+        });
     }
 
     /**
