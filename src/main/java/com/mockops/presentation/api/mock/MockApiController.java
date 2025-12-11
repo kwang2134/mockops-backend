@@ -28,22 +28,23 @@ public class MockApiController implements MockApiDocs {
     private final JobTrackingService jobTrackingService;
 
     /**
-     * 서버의 Mock API 목록 조회 (커서 기반 페이징)
+     * 서버의 Mock API 목록 조회 (복합 커서 페이징, name 정렬)
      * GET /api/v1/servers/{serverId}/mock-apis
      */
     @Override
     @GetMapping("/servers/{serverId}/mock-apis")
     public ResponseEntity<UnifiedResponse<MockApiListResponse>> getMockApisByServer(
         @PathVariable Long serverId,
-        @RequestParam(required = false) Long cursor,
+        @RequestParam(required = false) String lastNameCursor,
+        @RequestParam(required = false) Long lastIdCursor,
         @RequestParam(defaultValue = "20") int size,
         @AuthenticationPrincipal Long userId
     ) {
-        log.info("서버의 Mock API 목록 조회: serverId={}, cursor={}, size={}, userId={}",
-            serverId, cursor, size, userId);
+        log.info("서버의 Mock API 목록 조회: serverId={}, lastNameCursor={}, lastIdCursor={}, size={}, userId={}",
+            serverId, lastNameCursor, lastIdCursor, size, userId);
 
         MockApiListResponse response = mockApiService.getMockApisByServerWithResponse(
-            serverId, cursor, size, userId
+            serverId, lastNameCursor, lastIdCursor, size, userId
         );
 
         return ResponseEntity.ok(UnifiedResponse.success(response));

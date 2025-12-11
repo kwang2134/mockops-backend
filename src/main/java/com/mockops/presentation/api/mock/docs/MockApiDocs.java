@@ -23,7 +23,8 @@ public interface MockApiDocs {
 
     @Operation(
             summary = "서버의 Mock API 목록 조회",
-            description = "특정 도메인 서버에 속한 모든 Mock API 목록을 커서 기반 페이지네이션으로 조회합니다. " +
+            description = "특정 도메인 서버에 속한 모든 Mock API 목록을 복합 커서 기반 페이지네이션으로 조회합니다. " +
+                    "name(그룹 이름) 오름차순 → ID 오름차순으로 정렬되어 같은 그룹의 API가 함께 표시됩니다. " +
                     "각 Mock API의 HTTP 메서드, 엔드포인트 경로, 상태 코드, 활성화 여부 등의 정보를 포함합니다."
     )
     @ApiResponses({
@@ -51,8 +52,10 @@ public interface MockApiDocs {
     ResponseEntity<UnifiedResponse<MockApiListResponse>> getMockApisByServer(
             @Parameter(description = "서버 ID", example = "1")
             @PathVariable Long serverId,
-            @Parameter(description = "커서 ID (다음 페이지 조회 시 마지막 Mock API ID)", example = "123")
-            @RequestParam(required = false) Long cursor,
+            @Parameter(description = "마지막 name 커서 (다음 페이지 조회 시)", example = "users")
+            @RequestParam(required = false) String lastNameCursor,
+            @Parameter(description = "마지막 ID 커서 (다음 페이지 조회 시)", example = "123")
+            @RequestParam(required = false) Long lastIdCursor,
             @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
