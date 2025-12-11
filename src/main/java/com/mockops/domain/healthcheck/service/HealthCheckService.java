@@ -75,6 +75,19 @@ public class HealthCheckService {
     }
 
     /**
+     * 헬스 체크 결과를 담는 내부 레코드
+     */
+    private record HealthCheckResult(boolean isHealthy, String errorMessage, String errorType) {
+        static HealthCheckResult success() {
+            return new HealthCheckResult(true, null, null);
+        }
+
+        static HealthCheckResult failure(String errorMessage, String errorType) {
+            return new HealthCheckResult(false, errorMessage, errorType);
+        }
+    }
+
+    /**
      * 개별 서버 헬스 체크 수행
      *
      * @param serverId 서버 ID
@@ -96,26 +109,32 @@ public class HealthCheckService {
         log.debug("헬스 체크 시작: serverId={}, url={}, interval={}", serverId, fullUrl, interval);
 
         // WebClient로 HTTP GET 요청
-        boolean isHealthy = checkHealth(fullUrl);
+        HealthCheckResult result = checkHealth(fullUrl);
 
         // 결과에 따라 서버 상태 업데이트
-        updateServerStatus(server, isHealthy, interval);
+        updateServerStatus(server, result, interval);
 
         // lastCheckedAt 업데이트
         server.updateLastCheckedAt();
 
+        // 변경사항 명시적 저장
+        domainServerRepository.save(server);
+
         log.info("헬스 체크 완료: serverId={}, url={}, isHealthy={}, status={}",
-                serverId, fullUrl, isHealthy, server.getStatus());
+                serverId, fullUrl, result.isHealthy(), server.getStatus());
     }
 
     /**
      * WebClient를 사용한 헬스 체크 수행
      *
      * @param url 헬스 체크 URL
-     * @return 헬스 체크 성공 여부
+     * @return 헬스 체크 결과 (성공/실패, 에러 메시지, 에러 타입)
      */
-    private boolean checkHealth(String url) {
+    private HealthCheckResult checkHealth(String url) {
         try {
+            // 에러 정보를 저장할 변수
+            final String[] errorInfo = new String[2]; // [0]: errorMessage, [1]: errorType
+
             HttpStatusCode status = healthCheckWebClient.get()
                     .uri(url)
                     .retrieve()
@@ -123,37 +142,107 @@ public class HealthCheckService {
                     .map(response -> response.getStatusCode())
                     .timeout(Duration.ofSeconds(10))
                     .onErrorResume(e -> {
-                        log.warn("헬스 체크 요청 실패: url={}, error={}", url, e.getMessage());
+                        // 에러 타입과 메시지 추출
+                        String errorType = extractErrorType(e);
+                        String errorMessage = extractErrorMessage(e);
+
+                        errorInfo[0] = errorMessage;
+                        errorInfo[1] = errorType;
+
+                        log.warn("헬스 체크 요청 실패: url={}, errorType={}, error={}", url, errorType, errorMessage);
                         return Mono.empty();
                     })
                     .block();
 
-            boolean isHealthy = status != null && status.is2xxSuccessful();
-            log.debug("헬스 체크 응답: url={}, status={}, isHealthy={}", url, status, isHealthy);
-
-            return isHealthy;
+            if (status != null && status.is2xxSuccessful()) {
+                log.debug("헬스 체크 성공: url={}, status={}", url, status);
+                return HealthCheckResult.success();
+            } else if (status != null) {
+                // 2xx가 아닌 응답
+                String errorMessage = String.format("HTTP %d 응답", status.value());
+                log.debug("헬스 체크 실패: url={}, status={}", url, status);
+                return HealthCheckResult.failure(errorMessage, "HTTP_ERROR");
+            } else if (errorInfo[0] != null) {
+                // onErrorResume에서 캡처한 에러
+                return HealthCheckResult.failure(errorInfo[0], errorInfo[1]);
+            } else {
+                // 알 수 없는 실패
+                return HealthCheckResult.failure("응답 없음", "NO_RESPONSE");
+            }
         } catch (Exception e) {
-            log.error("헬스 체크 중 예외 발생: url={}, error={}", url, e.getMessage());
-            return false;
+            String errorType = extractErrorType(e);
+            String errorMessage = extractErrorMessage(e);
+            log.error("헬스 체크 중 예외 발생: url={}, errorType={}, error={}", url, errorType, errorMessage);
+            return HealthCheckResult.failure(errorMessage, errorType);
         }
+    }
+
+    /**
+     * 예외에서 상세 에러 메시지 추출 (metadata용)
+     * 콜론(:) 뒤의 첫 번째 의미있는 메시지를 추출
+     */
+    private String extractErrorMessage(Throwable e) {
+        String message = e.getMessage();
+
+        if (message == null || message.isEmpty()) {
+            return "알 수 없는 오류";
+        }
+
+        // 콜론(:) 뒤의 첫 번째 메시지 추출
+        // 예: "PKIX path validation failed: java.security.cert.CertPathValidatorException: validity check failed"
+        // → "PKIX path validation failed"
+        int firstColonIndex = message.indexOf(':');
+        if (firstColonIndex >= 0 && firstColonIndex < message.length() - 1) {
+            String afterFirstColon = message.substring(firstColonIndex + 1).trim();
+
+            // 두 번째 콜론이 있으면 그 전까지만 추출
+            int secondColonIndex = afterFirstColon.indexOf(':');
+            if (secondColonIndex >= 0) {
+                String extractedMessage = afterFirstColon.substring(0, secondColonIndex).trim();
+                if (!extractedMessage.isEmpty()) {
+                    return extractedMessage;
+                }
+            } else {
+                // 두 번째 콜론이 없으면 첫 콜론 이후 전체를 반환 (최대 200자)
+                if (afterFirstColon.length() > 200) {
+                    return afterFirstColon.substring(0, 200) + "...";
+                }
+                return afterFirstColon;
+            }
+        }
+
+        // 콜론이 없는 경우 원본 메시지 반환 (최대 200자)
+        if (message.length() > 200) {
+            return message.substring(0, 200) + "...";
+        }
+
+        return message;
+    }
+
+    /**
+     * 예외에서 에러 타입 추출 (알림 제목용)
+     * 예외 클래스 이름을 그대로 반환 (예: "SSLHandshakeException", "TimeoutException")
+     */
+    private String extractErrorType(Throwable e) {
+        return e.getClass().getSimpleName();
     }
 
     /**
      * 헬스 체크 결과에 따라 서버 상태 업데이트
      *
      * @param server 도메인 서버
-     * @param isHealthy 헬스 체크 성공 여부
+     * @param result 헬스 체크 결과
      * @param interval 헬스 체크 주기 (TTL 계산용)
      */
-    private void updateServerStatus(DomainServer server, boolean isHealthy, String interval) {
+    private void updateServerStatus(DomainServer server, HealthCheckResult result, String interval) {
         ServerStatus previousStatus = server.getStatus();
 
-        if (isHealthy) {
+        if (result.isHealthy()) {
             // 헬스 체크 성공 시
             handleHealthyServer(server, previousStatus);
         } else {
             // 헬스 체크 실패 시
-            handleUnhealthyServer(server, previousStatus, interval);
+            handleUnhealthyServer(server, previousStatus, interval, result);
         }
     }
 
@@ -183,16 +272,17 @@ public class HealthCheckService {
      * @param server 도메인 서버
      * @param previousStatus 이전 상태
      * @param interval 헬스 체크 주기 (TTL 계산용)
+     * @param result 헬스 체크 결과 (에러 정보 포함)
      */
-    private void handleUnhealthyServer(DomainServer server, ServerStatus previousStatus, String interval) {
+    private void handleUnhealthyServer(DomainServer server, ServerStatus previousStatus, String interval, HealthCheckResult result) {
         // 실패 카운트 증가 (interval에 따라 적절한 TTL 설정)
         int failureCount = incrementFailureCount(server.getId(), interval);
 
-        log.warn("헬스 체크 실패: serverId={}, interval={}, failureCount={}/{}",
-                server.getId(), interval, failureCount, FAILURE_THRESHOLD);
+        log.warn("헬스 체크 실패: serverId={}, interval={}, failureCount={}/{}, error={}",
+                server.getId(), interval, failureCount, FAILURE_THRESHOLD, result.errorMessage());
 
-        // 헬스 체크 실패 알림 생성
-        createHealthCheckFailureNotification(server, failureCount);
+        // 헬스 체크 실패 알림 생성 (에러 정보 포함)
+        createHealthCheckFailureNotification(server, failureCount, result);
 
         // 3회 연속 실패 시 ERROR 상태로 전환
         if (failureCount >= FAILURE_THRESHOLD && previousStatus == ServerStatus.DEPLOYED) {
@@ -359,29 +449,37 @@ public class HealthCheckService {
 
     /**
      * 헬스 체크 실패 알림 생성
+     *
+     * @param server 도메인 서버
+     * @param failureCount 연속 실패 횟수
+     * @param result 헬스 체크 결과 (에러 정보 포함)
      */
-    private void createHealthCheckFailureNotification(DomainServer server, int failureCount) {
+    private void createHealthCheckFailureNotification(DomainServer server, int failureCount, HealthCheckResult result) {
         try {
-            // metadata 생성
+            // metadata 생성 (사용자에게 유용한 정보만 포함)
             Map<String, Object> metadata = new HashMap<>();
-            metadata.put("serverId", server.getId());
-            metadata.put("serverName", server.getName());
-            metadata.put("projectId", server.getProjectId());
-            metadata.put("failureCount", failureCount);
             metadata.put("healthCheckUrl", server.getHealthCheckUrl());
+            metadata.put("serverName", server.getName());
+            metadata.put("failureCount", failureCount);
+            metadata.put("errorType", result.errorType());
+            metadata.put("errorMessage", result.errorMessage());
             String metadataJson = objectMapper.writeValueAsString(metadata);
 
-            // 알림 생성
+            // 알림 메시지에 에러 원인 포함
+            String message = String.format("서버 '%s'의 헬스 체크가 실패했습니다. (%d회 연속 실패)\n원인: %s",
+                    server.getName(), failureCount, result.errorMessage());
+
+            // 알림 생성 (title은 예외 클래스 이름만 사용하여 100자 제한 준수)
             notificationService.createNotification(
                     null,  // recipientUserId (null, 서버 귀속)
                     server.getId(),  // domainServerId
                     NotificationType.HEALTH_CHECK_FAILURE,
-                    "헬스 체크 실패",
-                    String.format("서버 '%s'의 헬스 체크가 실패했습니다. (%d회 연속 실패)",
-                            server.getName(), failureCount),
+                    result.errorType(),  // 예외 클래스 이름만 (예: "SSLHandshakeException")
+                    message,
                     metadataJson
             );
-            log.info("헬스 체크 실패 알림 생성: serverId={}, failureCount={}", server.getId(), failureCount);
+            log.info("헬스 체크 실패 알림 생성: serverId={}, failureCount={}, error={}",
+                    server.getId(), failureCount, result.errorMessage());
         } catch (Exception e) {
             log.error("헬스 체크 실패 알림 생성 실패: serverId={}, error={}", server.getId(), e.getMessage());
         }
