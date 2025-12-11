@@ -1,6 +1,7 @@
 package com.mockops.presentation.api.mock.docs;
 
 import com.mockops.global.common.UnifiedResponse;
+import com.mockops.presentation.api.job.dto.JobStatusResponse;
 import com.mockops.presentation.api.mock.dto.mockapi.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -277,6 +278,43 @@ public interface MockApiDocs {
     ResponseEntity<UnifiedResponse<MockApiResponse>> toggleMockApiStatus(
             @Parameter(description = "Mock API ID", example = "1")
             @PathVariable Long mockApiId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "서버의 진행 중인 Job 조회",
+            description = "특정 서버에 현재 진행 중인(PROCESSING 상태) Mock API 일괄 생성 Job을 조회합니다. " +
+                    "파일 업로드를 통한 Mock API 생성은 서버당 한 번에 하나의 Job만 처리되므로, " +
+                    "프론트엔드에서 이 API를 통해 진행 중인 Job이 있는지 확인하여 " +
+                    "중복 업로드를 방지할 수 있습니다. " +
+                    "진행 중인 Job이 없으면 404 Not Found를 반환합니다. " +
+                    "DEVELOPER 이상의 권한을 가진 멤버만 조회할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "진행 중인 Job 조회 성공",
+                    content = @Content(schema = @Schema(implementation = JobStatusResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "서버 접근 권한 없음 (DEVELOPER 이상 필요)",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "서버를 찾을 수 없거나 진행 중인 Job이 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<UnifiedResponse<JobStatusResponse>> getActiveJob(
+            @Parameter(description = "서버 ID", example = "1")
+            @PathVariable Long serverId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     );
 }

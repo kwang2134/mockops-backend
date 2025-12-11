@@ -75,6 +75,7 @@
 | **4** | `GET` | `/mocks/{mockId}` | Mock API 상세 조회 | `PROJECT_MEMBER` | None | None | `MockApiDetailResponse` |
 | **5** | `PATCH` | `/mocks/{mockId}` | Mock API 수정 | `PROJECT_DEVELOPER` | None | `MockApiUpdateRequest` | `MockApiUpdateResponse`       |
 | **6** | `DELETE` | `/mocks/{mockId}` | Mock API 삭제 | `PROJECT_DEVELOPER` | None | None | 204 No Content          |
+| **7** | `GET` | `/api/v1/servers/{serverId}/mock-apis/active-job` | 서버의 진행 중인 Job 조회 | `PROJECT_DEVELOPER` | None | None | `JobStatusResponse` |
 
 ---
 
