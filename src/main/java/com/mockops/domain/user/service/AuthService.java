@@ -1,11 +1,15 @@
 package com.mockops.domain.user.service;
 
+import com.mockops.domain.user.entity.AgreementType;
 import com.mockops.domain.user.entity.AuthProvider;
 import com.mockops.domain.user.entity.ProviderType;
 import com.mockops.domain.user.entity.User;
+import com.mockops.domain.user.entity.UserAgreement;
 import com.mockops.domain.user.repository.AuthProviderRepository;
+import com.mockops.domain.user.repository.UserAgreementRepository;
 import com.mockops.domain.user.repository.UserRepository;
 import com.mockops.domain.user.role.Role;
+import com.mockops.global.config.LegalProperties;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.global.security.JwtProvider;
 import com.mockops.global.util.CryptUtils;
@@ -25,8 +29,10 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final AuthProviderRepository authProviderRepository;
+    private final UserAgreementRepository userAgreementRepository;
     private final JwtProvider jwtProvider;
     private final CryptUtils cryptUtils;
+    private final LegalProperties legalProperties;
 
     @Transactional
     public TokenResponse refreshAccessToken(String refreshToken) {
@@ -61,8 +67,13 @@ public class AuthService {
             throw ErrorCode.INVALID_TOKEN.serviceException("저장된 Refresh Token과 일치하지 않습니다.");
         }
 
-        // 새로운 토큰 발급 (Rotation 전략)
-        String newAccessToken = jwtProvider.generateAccessToken(user.getId());
+        // 약관 동의 상태 조회
+        List<UserAgreement> agreements = userAgreementRepository.findByUserIdOrderByAgreedAtDesc(userId);
+        String tosAgreedVersion = getLatestAgreementVersion(agreements, AgreementType.TOS);
+        String ppAgreedVersion = getLatestAgreementVersion(agreements, AgreementType.PP);
+
+        // 새로운 토큰 발급 (Rotation 전략, 약관 동의 정보 포함)
+        String newAccessToken = jwtProvider.generateAccessTokenWithConsent(user.getId(), tosAgreedVersion, ppAgreedVersion);
         String newRefreshToken = jwtProvider.generateRefreshToken(user.getId());
 
         // 모든 AuthProvider의 RefreshToken을 새로운 것으로 업데이트
@@ -70,6 +81,17 @@ public class AuthService {
         authProviders.forEach(provider -> provider.updateRefreshToken(encryptedRefreshToken));
 
         return new TokenResponse(newAccessToken, newRefreshToken);
+    }
+
+    /**
+     * 특정 약관 타입의 최신 동의 버전 조회
+     */
+    private String getLatestAgreementVersion(List<UserAgreement> agreements, AgreementType type) {
+        return agreements.stream()
+                .filter(agreement -> agreement.getAgreementType() == type)
+                .findFirst()
+                .map(UserAgreement::getAgreementVersion)
+                .orElse(null);
     }
 
     @Transactional

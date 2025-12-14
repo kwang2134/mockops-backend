@@ -38,4 +38,14 @@ public class User extends BaseEntity {
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
+
+    /**
+     * 회원 탈퇴 처리
+     * 이메일과 닉네임을 deleted_[timestamp] 형태로 변경하여 익명화
+     */
+    public void withdraw() {
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        this.email = "deleted_" + timestamp + "@deleted.com";
+        this.nickname = "탈퇴한 사용자";
+    }
 }

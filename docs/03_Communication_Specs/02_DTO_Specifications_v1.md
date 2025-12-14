@@ -14,6 +14,13 @@
 |  |  | `nickname` | String | 사용자 닉네임 |
 |  |  | `role` | String | 사용자 권한 (`USER`/`ADMIN`) |
 | **`UserUpdateNicknameRequest`** | 닉네임 변경 요청 | `nickname` | String | 변경할 새로운 닉네임 |
+| **`UserAgreementRequest`** | 약관 동의 요청 | `agreements` | List<`AgreementItem`> | 동의할 약관 목록 |
+| **`UserAgreementRequest.AgreementItem`** | 약관 동의 항목 | `agreementType` | AgreementType (Enum) | 약관 타입 (`TOS`: 이용약관, `PP`: 개인정보처리방침) |
+|  |  | `version` | String | 약관 버전 (예: `TOS_20241215`) |
+| **`UserAgreementResponse`** | 약관 동의 이력 응답 | `id` | Long | 약관 동의 이력 고유 ID |
+|  |  | `agreementType` | AgreementType (Enum) | 약관 타입 (`TOS`, `PP`) |
+|  |  | `agreementVersion` | String | 동의한 약관 버전 |
+|  |  | `agreedAt` | Instant | 동의 일시 (타임스탬프) |
 
 ---
 

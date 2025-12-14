@@ -11,6 +11,9 @@
 | **3** | `GET` | `/api/v1/users/me` | 사용자 본인 정보 조회 | `MEMBER` | None | None | `UserDetailResponse` |
 | **4** | `PATCH` | `/api/v1/users/me/nickname` | 닉네임 수정 | `MEMBER` | None | `UserUpdateNicknameRequest` | `UserDetailResponse` |
 | **5** | `POST`  | `/api/v1/auth/logout` | 로그아웃 | `MEMBER` | None | None | 204 No Content |
+| **6** | `DELETE` | `/api/v1/users/me` | 회원 탈퇴 (데이터 익명화, Refresh Token 쿠키 만료) | `MEMBER` | None | None | 200 OK |
+| **7** | `POST` | `/api/v1/users/me/agreements` | 약관 동의 처리 (TOS, PP) | `MEMBER` | None | `UserAgreementRequest` | `List<UserAgreementResponse>` |
+| **8** | `GET` | `/api/v1/users/me/agreements` | 약관 동의 이력 조회 | `MEMBER` | None | None | `List<UserAgreementResponse>` |
 
 ---
 

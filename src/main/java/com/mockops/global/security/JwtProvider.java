@@ -34,6 +34,33 @@ public class JwtProvider {
                 .compact();
     }
 
+    /**
+     * Access Token 생성 (약관 동의 정보 포함)
+     * @param userId 사용자 ID
+     * @param tosAgreedVersion 동의한 이용약관 버전 (null 가능)
+     * @param ppAgreedVersion 동의한 개인정보처리방침 버전 (null 가능)
+     * @return JWT Access Token
+     */
+    public String generateAccessTokenWithConsent(Long userId, String tosAgreedVersion, String ppAgreedVersion) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getAccessTokenExpiration().toMillis());
+
+        var builder = Jwts.builder()
+                .subject(String.valueOf(userId))
+                .issuedAt(now)
+                .expiration(expiryDate);
+
+        // 약관 동의 정보 추가 (null이 아닐 경우에만)
+        if (tosAgreedVersion != null) {
+            builder.claim("tos_agreed_version", tosAgreedVersion);
+        }
+        if (ppAgreedVersion != null) {
+            builder.claim("pp_agreed_version", ppAgreedVersion);
+        }
+
+        return builder.signWith(getSigningKey()).compact();
+    }
+
     public String generateRefreshToken(Long userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getRefreshTokenExpiration().toMillis());
@@ -54,6 +81,44 @@ public class JwtProvider {
                 .getPayload();
 
         return Long.parseLong(claims.getSubject());
+    }
+
+    /**
+     * JWT에서 이용약관 동의 버전 추출
+     * @param token Access Token
+     * @return 이용약관 동의 버전 (없으면 null)
+     */
+    public String getTosAgreedVersionFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            return claims.get("tos_agreed_version", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * JWT에서 개인정보처리방침 동의 버전 추출
+     * @param token Access Token
+     * @return 개인정보처리방침 동의 버전 (없으면 null)
+     */
+    public String getPpAgreedVersionFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            return claims.get("pp_agreed_version", String.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public boolean validateToken(String token) {
@@ -217,25 +282,25 @@ public class JwtProvider {
 
             String tokenType = claims.get("type", String.class);
             if (!"webhook".equals(tokenType)) {
-                log.error("Webhook 토큰이 아닙니다.");
+                log.error("Webhook 토큰이 아닙니다. type={}", tokenType);
                 throw ErrorCode.INVALID_TOKEN.serviceException();
             }
 
             return true;
         } catch (ExpiredJwtException e) {
-            log.error("만료된 Webhook 토큰입니다.");
+            log.error("만료된 Webhook 토큰입니다. expiredAt={}", e.getClaims().getExpiration());
             throw ErrorCode.EXPIRED_TOKEN.serviceException();
         } catch (UnsupportedJwtException e) {
-            log.error("지원되지 않는 JWT 토큰입니다.");
+            log.error("지원되지 않는 JWT 토큰입니다. message={}", e.getMessage());
             throw ErrorCode.INVALID_TOKEN.serviceException();
         } catch (MalformedJwtException e) {
-            log.error("잘못된 형식의 JWT 토큰입니다.");
+            log.error("잘못된 형식의 JWT 토큰입니다. message={}", e.getMessage());
             throw ErrorCode.INVALID_TOKEN.serviceException();
         } catch (JwtException e) {
-            log.error("Webhook JWT 검증에 실패했습니다.");
+            log.error("Webhook JWT 검증에 실패했습니다. message={}", e.getMessage(), e);
             throw ErrorCode.INVALID_TOKEN.serviceException();
         } catch (IllegalArgumentException e) {
-            log.error("JWT 토큰이 비어있습니다.");
+            log.error("JWT 토큰이 비어있습니다. message={}", e.getMessage());
             throw ErrorCode.INVALID_TOKEN.serviceException();
         }
     }

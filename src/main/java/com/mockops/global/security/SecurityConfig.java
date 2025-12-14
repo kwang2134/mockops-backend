@@ -4,6 +4,7 @@ import com.mockops.global.security.oauth2.CustomOAuth2UserService;
 import com.mockops.global.security.oauth2.OAuth2AuthenticationFailureHandler;
 import com.mockops.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -24,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ConsentEnforcementFilter consentEnforcementFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
@@ -35,6 +38,9 @@ public class SecurityConfig {
             "/docs/**",
     };
 
+    @Value("${cors.allowed-origins}")
+    private String corsAllowedOrigins;
+
     /**
      * CORS 설정
      * MockOps 서비스 자체 프론트엔드만 허용
@@ -44,11 +50,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration serviceConfig = new CorsConfiguration();
 
+        // cors origin
+        List<String> allowOrigins = Arrays.asList(corsAllowedOrigins.split(","));
+
         // MockOps 프론트엔드 허용
-        serviceConfig.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173"
-        ));
+        serviceConfig.setAllowedOrigins(allowOrigins);
 
         serviceConfig.setAllowedMethods(List.of("*"));
         serviceConfig.setAllowedHeaders(List.of("*"));
@@ -111,7 +117,8 @@ public class SecurityConfig {
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler)
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(consentEnforcementFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
