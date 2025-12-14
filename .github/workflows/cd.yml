@@ -137,6 +137,8 @@ jobs:
             -e MAIL_PORT="${{ secrets.MAIL_PORT }}" \
             -e MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}" \
             -e MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
+            -e LEGAL_TOS_VERSION="${{ secrets.LEGAL_TOS_VERSION }}" \
+            -e LEGAL_PP_VERSION="${{ secrets.LEGAL_PP_VERSION }}" \
             -e LOG_FILE_PATH=/var/log/mockops/application.log \
             -v /var/log/mockops:/var/log/mockops \
             "$CLEAN_IMAGE_NAME"
