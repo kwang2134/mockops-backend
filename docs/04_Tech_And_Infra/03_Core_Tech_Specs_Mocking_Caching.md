@@ -15,6 +15,8 @@
 
 ---
 
+![img.png](img.png)
+
 ### 2. 💾 Mock API 데이터 캐싱 전략 (Redis 기반)
 
 Mock API의 읽기 성능을 극대화하기 위해 Redis를 사용하여 **Write-Through/Write-Back** 정책을 적용합니다.

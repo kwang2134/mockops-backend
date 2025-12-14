@@ -37,4 +37,12 @@ public class AuthProvider extends BaseEntity {
         this.refreshToken = refreshToken;
         this.userId = userId;
     }
+
+    public void updateRefreshToken(String encryptedRefreshToken) {
+        this.refreshToken = encryptedRefreshToken;
+    }
+
+    public void clearRefreshToken() {
+        this.refreshToken = null;
+    }
 }

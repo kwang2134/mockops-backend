@@ -1,11 +1,13 @@
 server:
   port: ${SERVER_PORT:8080}
+  ssl:
+    enabled: ${SSL_ENABLED:true}  # 프로덕션에서는 HTTPS 사용
 
 spring:
   # 데이터베이스 설정 (프로덕션 - 환경변수)
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: ${DB_URL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}  # 예: jdbc:mysql://db.example.com:3306/mockops_prod?useSSL=true&serverTimezone=UTC&characterEncoding=UTF-8
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
@@ -18,15 +20,18 @@ spring:
   # JPA 설정
   jpa:
     hibernate:
-      ddl-auto: validate  # 프로덕션에서는 validate만 사용
+      ddl-auto: validate  # 프로덕션에서는 validate만 사용 (스키마 자동 변경 금지)
     show-sql: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: false
 
   # Redis 설정 (프로덕션 - 환경변수)
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}  # 예: redis.example.com
+      port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
       lettuce:
         pool:
@@ -56,10 +61,10 @@ spring:
 
   # 메일 설정 (프로덕션 - 환경변수)
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
     username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    password: ${MAIL_PASSWORD}  # Gmail 앱 비밀번호
     properties:
       mail:
         smtp:
@@ -67,13 +72,24 @@ spring:
           starttls:
             enable: true
 
-# JWT Secret Key (프로덕션 - 환경변수)
+# JWT Secret Key (프로덕션 - 환경변수, 최소 256비트 이상 필수)
 jwt:
   secret: ${JWT_SECRET}
 
+# OAuth2 리다이렉트 URL (프로덕션 - 환경변수)
+oauth2:
+  redirect-url: ${OAUTH2_REDIRECT_URL}
+  error-redirect-url: ${OAUTH2_ERROR_REDIRECT_URL}
+  consent-required-url: ${OAUTH2_CONSENT_REQUIRED_URL}
+
+# Frontend URL (프로덕션 - 환경변수)
+app:
+  frontend-url: ${APP_FRONTEND_URL}
+
 # CORS 설정 (프로덕션 - 환경변수, 쉼표로 구분)
+# 예: CORS_ALLOWED_ORIGINS=https://mockops.com,https://www.mockops.com
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://mockops.com}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
 # 로깅 레벨 (프로덕션)
 logging:
@@ -86,3 +102,9 @@ logging:
     name: ${LOG_FILE_PATH:/var/log/mockops/application.log}
     max-size: 10MB
     max-history: 30
+
+# 약관 버전 관리
+legal:
+  agreements:
+    tos-version: ${LEGAL_TOS_VERSION}
+    pp-version: ${LEGAL_PP_VERSION}

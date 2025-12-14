@@ -17,13 +17,59 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
+    CONSENT_REQUIRED(HttpStatus.FORBIDDEN, "약관 동의가 필요합니다."),
+    UNSUPPORTED_AGREEMENT_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 약관 타입입니다."),
+
+    // OAuth2 관련
+    OAUTH2_PROVIDER_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "지원하지 않는 OAuth2 Provider입니다."),
+    OAUTH2_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "OAuth2 인증에 실패했습니다."),
+    OAUTH2_USER_INFO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "OAuth2 사용자 정보를 가져오는데 실패했습니다."),
+    OAUTH2_TOKEN_EXCHANGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "OAuth2 토큰 교환에 실패했습니다."),
+    OAUTH2_PROVIDER_CONNECTION_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "OAuth2 Provider 연결에 실패했습니다."),
 
     // 유저 관련
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지 않는 유저입니다."),
     DUPLICATE_AUTH_SOCIAL(HttpStatus.CONFLICT,"이미 연결된 소셜 로그인 플랫폼입니다."),
     TOKEN_NOT_FOUND(HttpStatus.BAD_REQUEST,"존재하지 않는 토큰입니다."),
     UNAUTHORIZED_USER(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다."),
-    PERMISSION_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
+    PERMISSION_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+
+    // 프로젝트 관련
+    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 프로젝트입니다."),
+    PROJECT_NAME_DUPLICATED(HttpStatus.CONFLICT, "이미 존재하는 프로젝트 이름입니다."),
+    PROJECT_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 프로젝트 멤버입니다."),
+    PROJECT_MEMBER_DUPLICATED(HttpStatus.CONFLICT, "이미 프로젝트에 참여 중인 멤버입니다."),
+    PROJECT_CORS_ORIGIN_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 CORS Origin입니다."),
+    PROJECT_CORS_ORIGIN_DUPLICATED(HttpStatus.CONFLICT, "이미 등록된 CORS Origin입니다."),
+
+    // 초대 관련
+    INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 초대장입니다."),
+    INVITATION_ALREADY_ACCEPTED(HttpStatus.CONFLICT, "이미 수락된 초대장입니다."),
+    INVITATION_EXPIRED(HttpStatus.BAD_REQUEST, "만료된 초대장입니다."),
+    INVITATION_CANCELED(HttpStatus.BAD_REQUEST, "취소된 초대장입니다."),
+    INVITATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 이메일로 초대장이 발송되었습니다."),
+
+    // 메일 관련
+    EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이메일 발송에 실패했습니다."),
+
+    // Mock 도메인 관련
+    DOMAIN_SERVER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 도메인 서버입니다."),
+    DOMAIN_SERVER_DUPLICATED(HttpStatus.CONFLICT, "이미 존재하는 도메인 서버 이름입니다."),
+    MOCK_API_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 Mock API입니다."),
+    MOCK_API_DUPLICATED(HttpStatus.CONFLICT, "이미 존재하는 Mock API입니다."),
+
+    // Job Tracking 관련
+    JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 작업입니다."),
+
+    // Webhook 관련
+    WEBHOOK_SECRET_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 Webhook Secret입니다."),
+    WEBHOOK_SECRET_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 Webhook Secret이 존재합니다."),
+    WEBHOOK_SECRET_INACTIVE(HttpStatus.FORBIDDEN, "비활성화된 Webhook Secret입니다."),
+
+    // 파일 업로드 관련
+    INVALID_FILE_FORMAT(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
+    FILE_PARSE_ERROR(HttpStatus.BAD_REQUEST, "파일 파싱 중 오류가 발생했습니다."),
+    INVALID_OPENAPI_VERSION(HttpStatus.BAD_REQUEST, "지원하지 않는 OpenAPI 버전입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

@@ -1,9 +1,15 @@
 package com.mockops.mockops;
 
+import com.mockops.config.TestJacksonConfig;
+import com.mockops.config.TestMailConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
+@ActiveProfiles("test")
+@Import({TestMailConfig.class, TestJacksonConfig.class})
 class MockOpsBackendApplicationTests {
 
 	@Test

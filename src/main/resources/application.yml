@@ -2,7 +2,7 @@ spring:
   application:
     name: MockOps-Backend
 
-  # 활성 프로필 설정 (local 또는 prod)
+  # 활성 프로필 설정
   profiles:
     active: local
 
@@ -25,7 +25,27 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-# JWT 공통 설정 (토큰 만료 시간)
+# JWT 토큰 만료 시간 (공통)
 jwt:
-  access-token-expiration: 1800000  # 30분 (milliseconds)
-  refresh-token-expiration: 1209600000  # 2주 (milliseconds)
+  access-token-expiration: 30m    # Access Token: 30분
+  refresh-token-expiration: 14d   # Refresh Token: 2주
+  invitation-token-expiration: 7d # 초대 토큰: 7일
+  webhook-token-expiration: 30d   # Webhook 토큰: 30일
+
+# OAuth2 리다이렉트 URL (공통 기본값)
+oauth2:
+  redirect-url: http://localhost:3000/oauth2/callback
+  error-redirect-url: http://localhost:3000/oauth2/error
+
+# Frontend URL (공통 기본값)
+app:
+  frontend-url: http://localhost:3000
+
+# Redis 공통 설정
+spring.data.redis:
+  timeout: 3000ms
+  lettuce:
+    pool:
+      max-active: 8
+      max-idle: 8
+      min-idle: 2

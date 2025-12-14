@@ -1,0 +1,97 @@
+package com.mockops.presentation.api.mock;
+
+import com.mockops.presentation.api.mock.docs.PublicMockDocs;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * Public Mock API 엔드포인트 (더미 컨트롤러)
+ *
+ * 실제 요청 처리는 MockOpsHandlerMapping에서 수행됩니다.
+ * 이 컨트롤러는 다음 목적으로 존재합니다:
+ *
+ * 1. API 문서 자동 생성 (Swagger/OpenAPI)
+ * 2. Spring Boot Actuator의 /mappings 엔드포인트에 표시
+ * 3. Spring Security 설정의 명확성
+ * 4. IDE 엔드포인트 검색 지원
+ *
+ * 주의: 이 컨트롤러의 메소드는 절대 실행되지 않습니다.
+ *      MockOpsHandlerMapping이 우선순위(HIGHEST_PRECEDENCE)로 요청을 가로챕니다.
+ */
+@Slf4j
+@RestController
+@RequestMapping("/mock")
+public class PublicMockController implements PublicMockDocs {
+
+    /**
+     * Mock API 요청 처리 (GET)
+     *
+     * 실제 처리: MockOpsHandlerMapping → MockApiHandlerAdapter
+     *
+     * @param projectId 프로젝트 ID
+     * @param serverSlug 서버 slug
+     */
+    @Override
+    @GetMapping("/{projectId}/{serverSlug}/**")
+    public ResponseEntity<String> handleGetRequest(
+        @PathVariable Long projectId,
+        @PathVariable String serverSlug
+    ) {
+        // 이 코드는 절대 실행되지 않습니다 (MockOpsHandlerMapping이 가로챔)
+        log.error("PublicMockController.handleGetRequest 실행됨 - 이것은 오류입니다!");
+        throw new IllegalStateException("이 메소드는 실행되어서는 안 됩니다. MockOpsHandlerMapping을 확인하세요.");
+    }
+
+    /**
+     * Mock API 요청 처리 (POST)
+     */
+    @Override
+    @PostMapping("/{projectId}/{serverSlug}/**")
+    public ResponseEntity<String> handlePostRequest(
+        @PathVariable Long projectId,
+        @PathVariable String serverSlug
+    ) {
+        log.error("PublicMockController.handlePostRequest 실행됨 - 이것은 오류입니다!");
+        throw new IllegalStateException("이 메소드는 실행되어서는 안 됩니다. MockOpsHandlerMapping을 확인하세요.");
+    }
+
+    /**
+     * Mock API 요청 처리 (PUT)
+     */
+    @Override
+    @PutMapping("/{projectId}/{serverSlug}/**")
+    public ResponseEntity<String> handlePutRequest(
+        @PathVariable Long projectId,
+        @PathVariable String serverSlug
+    ) {
+        log.error("PublicMockController.handlePutRequest 실행됨 - 이것은 오류입니다!");
+        throw new IllegalStateException("이 메소드는 실행되어서는 안 됩니다. MockOpsHandlerMapping을 확인하세요.");
+    }
+
+    /**
+     * Mock API 요청 처리 (DELETE)
+     */
+    @Override
+    @DeleteMapping("/{projectId}/{serverSlug}/**")
+    public ResponseEntity<String> handleDeleteRequest(
+        @PathVariable Long projectId,
+        @PathVariable String serverSlug
+    ) {
+        log.error("PublicMockController.handleDeleteRequest 실행됨 - 이것은 오류입니다!");
+        throw new IllegalStateException("이 메소드는 실행되어서는 안 됩니다. MockOpsHandlerMapping을 확인하세요.");
+    }
+
+    /**
+     * Mock API 요청 처리 (PATCH)
+     */
+    @Override
+    @PatchMapping("/{projectId}/{serverSlug}/**")
+    public ResponseEntity<String> handlePatchRequest(
+        @PathVariable Long projectId,
+        @PathVariable String serverSlug
+    ) {
+        log.error("PublicMockController.handlePatchRequest 실행됨 - 이것은 오류입니다!");
+        throw new IllegalStateException("이 메소드는 실행되어서는 안 됩니다. MockOpsHandlerMapping을 확인하세요.");
+    }
+}
