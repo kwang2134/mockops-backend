@@ -115,7 +115,7 @@ jobs:
             --network app_prod_network \
             -p 8080:8080 \
             -e SPRING_PROFILES_ACTIVE=prod \
-            -e JAVA_TOOL_OPTIONS="-Dreactor.netty.native.quiche.disable=true app.jar" \
+            -e JAVA_TOOL_OPTIONS="-Dreactor.netty.native.quiche.disable=true" \
             -e SERVER_PORT="${{ secrets.SERVER_PORT }}" \
             -e SSL_ENABLED="${{ secrets.SSL_ENABLED }}" \
             -e DB_URL="${{ secrets.DB_URL }}" \
