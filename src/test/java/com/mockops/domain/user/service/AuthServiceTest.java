@@ -4,6 +4,7 @@ import com.mockops.domain.user.entity.AuthProvider;
 import com.mockops.domain.user.entity.ProviderType;
 import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.repository.AuthProviderRepository;
+import com.mockops.domain.user.repository.UserAgreementRepository;
 import com.mockops.domain.user.repository.UserRepository;
 import com.mockops.domain.user.role.Role;
 import com.mockops.global.exception.BusinessException;
@@ -22,9 +23,10 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService 테스트")
@@ -35,6 +37,9 @@ class AuthServiceTest {
 
     @Mock
     private AuthProviderRepository authProviderRepository;
+
+    @Mock
+    private UserAgreementRepository userAgreementRepository;
 
     @Mock
     private JwtProvider jwtProvider;
@@ -74,7 +79,7 @@ class AuthServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(authProviderRepository.findByUserId(userId)).willReturn(List.of(authProvider));
         given(cryptUtils.decrypt(encryptedRefreshToken)).willReturn(refreshToken);
-        given(jwtProvider.generateAccessToken(any())).willReturn(newAccessToken);
+        given(jwtProvider.generateAccessTokenWithConsent(any(), any(), any())).willReturn(newAccessToken);
         given(jwtProvider.generateRefreshToken(any())).willReturn(newRefreshToken);
         given(cryptUtils.encrypt(newRefreshToken)).willReturn(newEncryptedRefreshToken);
 
@@ -207,7 +212,7 @@ class AuthServiceTest {
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
         given(userRepository.save(any(User.class))).willReturn(newUser);
         given(authProviderRepository.save(any(AuthProvider.class))).willAnswer(invocation -> invocation.getArgument(0));
-        given(jwtProvider.generateAccessToken(any())).willReturn(accessToken);
+        given(jwtProvider.generateAccessTokenWithConsent(any(), any(), any())).willReturn(accessToken);
         given(jwtProvider.generateRefreshToken(any())).willReturn(refreshToken);
         given(cryptUtils.encrypt(refreshToken)).willReturn(encryptedRefreshToken);
 
@@ -250,7 +255,7 @@ class AuthServiceTest {
         given(authProviderRepository.findByProviderTypeAndProviderId(providerType, providerId))
                 .willReturn(Optional.of(existingAuthProvider));
         given(userRepository.findById(userId)).willReturn(Optional.of(existingUser));
-        given(jwtProvider.generateAccessToken(any())).willReturn(accessToken);
+        given(jwtProvider.generateAccessTokenWithConsent(any(), any(), any())).willReturn(accessToken);
         given(jwtProvider.generateRefreshToken(any())).willReturn(refreshToken);
         given(cryptUtils.encrypt(refreshToken)).willReturn(encryptedRefreshToken);
 
@@ -287,7 +292,7 @@ class AuthServiceTest {
                 .willReturn(Optional.empty());
         given(userRepository.findByEmail(email)).willReturn(Optional.of(existingUser));
         given(authProviderRepository.save(any(AuthProvider.class))).willAnswer(invocation -> invocation.getArgument(0));
-        given(jwtProvider.generateAccessToken(any())).willReturn(accessToken);
+        given(jwtProvider.generateAccessTokenWithConsent(any(), any(), any())).willReturn(accessToken);
         given(jwtProvider.generateRefreshToken(any())).willReturn(refreshToken);
         given(cryptUtils.encrypt(refreshToken)).willReturn(encryptedRefreshToken);
 

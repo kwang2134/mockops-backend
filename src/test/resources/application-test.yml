@@ -76,10 +76,14 @@ jwt:
 oauth2:
   redirect-url: http://localhost:3000/oauth2/callback
   error-redirect-url: http://localhost:3000/oauth2/error
+  consent-required-url: http://localhost:3000/consent
 
 # Redis 자동 설정 비활성화 (테스트 환경에서는 Mock 사용)
 spring.autoconfigure.exclude:
   - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:5173
 
 # Mail 테스트 설정 (실제 발송 없음)
 spring.mail:
@@ -97,3 +101,8 @@ spring.mail:
 # 애플리케이션 설정
 app:
   frontend-url: http://localhost:3000
+
+legal:
+  agreements:
+    tos-version: "TOS_20251214"
+    pp-version: "PP_20251214_v1.0"
