@@ -108,3 +108,9 @@ legal:
   agreements:
     tos-version: ${LEGAL_TOS_VERSION}
     pp-version: ${LEGAL_PP_VERSION}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
