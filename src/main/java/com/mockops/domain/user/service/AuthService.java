@@ -1,10 +1,6 @@
 package com.mockops.domain.user.service;
 
-import com.mockops.domain.user.entity.AgreementType;
-import com.mockops.domain.user.entity.AuthProvider;
-import com.mockops.domain.user.entity.ProviderType;
-import com.mockops.domain.user.entity.User;
-import com.mockops.domain.user.entity.UserAgreement;
+import com.mockops.domain.user.entity.*;
 import com.mockops.domain.user.repository.AuthProviderRepository;
 import com.mockops.domain.user.repository.UserAgreementRepository;
 import com.mockops.domain.user.repository.UserRepository;
@@ -105,7 +101,6 @@ public class AuthService {
 
     /**
      * OAuth2 로그인 처리 (Google, GitHub 등)
-     * TODO: OAuth2 연동 구현 필요
      */
     @Transactional
     public TokenResponse handleOAuth2Login(ProviderType providerType, String providerId, String email, String nickname) {
@@ -146,7 +141,15 @@ public class AuthService {
         }
 
         // 토큰 발급
-        String accessToken = jwtProvider.generateAccessToken(user.getId());
+//        String accessToken = jwtProvider.generateAccessToken(user.getId());
+//        String refreshToken = jwtProvider.generateRefreshToken(user.getId());
+
+        List<UserAgreement> agreements = userAgreementRepository.findByUserIdOrderByAgreedAtDesc(user.getId());
+        String tosAgreedVersion = getLatestAgreementVersion(agreements, AgreementType.TOS);
+        String ppAgreedVersion = getLatestAgreementVersion(agreements, AgreementType.PP);
+
+        // 약관 포함 버전
+        String accessToken = jwtProvider.generateAccessTokenWithConsent(user.getId(), tosAgreedVersion, ppAgreedVersion);
         String refreshToken = jwtProvider.generateRefreshToken(user.getId());
 
         // RefreshToken을 AuthProvider에 암호화하여 저장

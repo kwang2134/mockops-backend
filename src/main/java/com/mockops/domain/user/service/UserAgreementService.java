@@ -1,12 +1,12 @@
 package com.mockops.domain.user.service;
 
 import com.mockops.domain.user.entity.AgreementType;
-import com.mockops.domain.user.entity.User;
 import com.mockops.domain.user.entity.UserAgreement;
 import com.mockops.domain.user.repository.UserAgreementRepository;
 import com.mockops.presentation.api.user.dto.UserAgreementRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +24,13 @@ public class UserAgreementService {
     private final UserAgreementRepository userAgreementRepository;
     private final UserService userService;
 
+    @Value("${legal.agreements.tos-version}")
+    private String tosVersion;
+
+    @Value("${legal.agreements.pp-version}")
+    private String ppVersion;
+
+
     /**
      * 약관 동의 처리
      * 개인정보처리방침과 이용약관에 대한 동의를 기록
@@ -37,7 +44,10 @@ public class UserAgreementService {
                 .map(item -> UserAgreement.builder()
                         .userId(userId)
                         .agreementType(item.agreementType())
-                        .agreementVersion(item.version())
+                        .agreementVersion(switch (item.agreementType()) {
+                            case AgreementType.TOS -> tosVersion;
+                            case AgreementType.PP -> ppVersion;
+                        })
                         .agreedAt(java.time.Instant.now())
                         .build())
                 .toList();

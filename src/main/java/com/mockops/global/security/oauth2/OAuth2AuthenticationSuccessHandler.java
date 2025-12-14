@@ -19,7 +19,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -102,18 +101,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         boolean hasValidPp = legalProperties.getPpVersion().equals(ppAgreedVersion);
 
         if (!hasValidTos || !hasValidPp) {
-            // 미동의: AccessToken 생성 후 약관 동의 페이지로 리다이렉트
-            String accessToken = jwtProvider.generateAccessTokenWithConsent(userId, tosAgreedVersion, ppAgreedVersion);
-
-            String targetUrl = UriComponentsBuilder.fromUriString(consentRedirectUrl)
-                    .queryParam("access_token", accessToken)
-                    .build()
-                    .toUriString();
-
             log.info("약관 미동의 사용자, 동의 페이지로 리다이렉트: userId={}, tosAgreed={}, ppAgreed={}, targetUrl={}",
                     userId, tosAgreedVersion, ppAgreedVersion, consentRedirectUrl);
-
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+            getRedirectStrategy().sendRedirect(request, response, consentRedirectUrl);
         } else {
             // 동의 완료: 기존 플로우 (프론트엔드로 리다이렉트)
             log.info("약관 동의 완료, 리다이렉트: userId={}, targetUrl={}", userId, redirectUrl);
