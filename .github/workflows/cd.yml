@@ -77,7 +77,8 @@ jobs:
       - name: Pull latest image from ECR
         run: |
           echo "📦 Pulling latest image from ECR..."
-          docker pull ${{ env.IMAGE_NAME }}
+          CLEAN_IMAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | tr -d '[:space:]')
+          docker pull "$CLEAN_IMAGE_NAME"
 
       - name: Stop and remove existing container
         run: |
@@ -93,6 +94,7 @@ jobs:
       - name: Run new container
         run: |
           echo "🚀 Starting new container..."
+          CLEAN_IMAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | tr -d '[:space:]')
           docker run -d --name ${{ env.CONTAINER_NAME }} \
             --restart unless-stopped \
             --network app_prod_network \
@@ -122,7 +124,7 @@ jobs:
             -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
             -e LOG_FILE_PATH=/var/log/mockops/application.log \
             -v /var/log/mockops:/var/log/mockops \
-            ${{ env.IMAGE_NAME }}
+            "$CLEAN_IMAGE_NAME"
 
       - name: Clean up unused images
         run: |
