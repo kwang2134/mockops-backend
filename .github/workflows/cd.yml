@@ -194,7 +194,7 @@ jobs:
           # 1. 릴리즈 노트 생성에 필요한 환경 변수 설정
           # ----------------------------------------------------
           # 마지막 태그를 찾아 커밋 비교의 기준점으로 사용
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
           if [ -z "$LAST_TAG" ]; then
               LAST_TAG=$(git rev-list --max-parents=0 HEAD)
               echo "No tags found. Starting from the initial commit: $LAST_TAG"
