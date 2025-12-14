@@ -1,7 +1,16 @@
 server:
   port: ${SERVER_PORT:8080}
   ssl:
-    enabled: ${SSL_ENABLED:true}  # 프로덕션에서는 HTTPS 사용
+    enabled: ${SSL_ENABLED:false}  # 프로덕션에서는 HTTPS 사용
+
+  forward-headers-strategy: framework
+
+  servlet:
+    session:
+      cookie:
+        same-site: none
+        secure: true
+        domain: mockops.cloud
 
 spring:
   # 데이터베이스 설정 (프로덕션 - 환경변수)
@@ -114,3 +123,4 @@ management:
     web:
       exposure:
         include: health,info,prometheus
+
