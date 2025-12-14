@@ -23,6 +23,9 @@ public interface WebhookDocs {
             description = "CI/CD 파이프라인에서 배포 완료 시 호출되는 Webhook 엔드포인트입니다. " +
                     "배포 상태(SUCCESS, FAILURE)에 따라 헬스체크를 수행하거나 알림을 전송합니다. " +
                     "요청은 비동기로 처리되며, 202 Accepted를 즉시 반환합니다.\n\n" +
+                    "**필수 정보**:\n" +
+                    "- **프로젝트 이름**: 배포 대상 프로젝트의 이름\n" +
+                    "- **도메인 서버 이름**: 배포 상태를 변경할 특정 도메인 서버의 이름 (도메인 서버 이름은 프로젝트 간 겹칠 수 있으므로 프로젝트 이름과 함께 사용)\n\n" +
                     "**인증**: Authorization 헤더에 Bearer 토큰(Webhook JWT)이 필요합니다. " +
                     "토큰은 프로젝트별 Webhook Secret을 통해 생성됩니다."
     )

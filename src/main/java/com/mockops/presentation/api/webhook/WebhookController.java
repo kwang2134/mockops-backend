@@ -40,7 +40,8 @@ public class WebhookController implements WebhookDocs {
             @RequestHeader("Authorization") String authHeader,
             @Valid @RequestBody DeploymentEventRequest request
     ) {
-        log.info("Webhook 수신: projectId={}, status={}", projectId, request.status());
+        log.info("Webhook 수신: projectId={}, projectName={}, domainServerName={}, status={}",
+                projectId, request.projectName(), request.domainServerName(), request.status());
 
         // 1. Webhook 인증 및 검증
         if (!webhookAuthService.validateWebhookRequest(authHeader, projectId)) {
