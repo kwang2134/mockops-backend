@@ -82,7 +82,7 @@ jobs:
           
           # 2. IMAGE_NAME에서 모든 공백 문자, 제어 문자 (널 바이트 포함)를 제거합니다.
           #    tr -d '[:space:]\0'를 사용하여 널 바이트까지 명시적으로 제거합니다.
-          CLEAN_IMAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | tr -d '[:space:]\0')
+          CLEAN_IMAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | tr -d '[:cntrl:]')
           
           # 3. 정리된 변수를 다음 스텝에서 사용할 수 있도록 Actions Output에 저장합니다.
           echo "CLEAN_IMAGE_NAME=${CLEAN_IMAGE_NAME}" >> $GITHUB_OUTPUT
