@@ -42,4 +42,15 @@ public class UserService {
         user.updateNickname(newNickname);
         return user;
     }
+
+    /**
+     * 회원 탈퇴
+     * 사용자 정보를 익명화하여 하드 딜리트 효과를 냄 (컬럼은 유지)
+     */
+    @Transactional
+    public void withdrawUser(Long userId) {
+        User user = getUserById(userId);
+        user.withdraw();
+        log.info("회원 탈퇴 처리 완료: userId={}, email={}", userId, user.getEmail());
+    }
 }

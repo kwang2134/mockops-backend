@@ -6,13 +6,21 @@
 
 | **DTO 클래스명** | **역할** | **필드명** | **타입** | **설명** |
 | --- | --- | --- | --- | --- |
-| **`TokenResponse`** | Access/Refresh 토큰 응답 | `accessToken` | String | 실제 API 호출에 사용되는 JWT |
+| **`TokenResponse`** | Access/Refresh 토큰 응답 (OAuth 로그인) | `accessToken` | String | 실제 API 호출에 사용되는 JWT |
 |  |  | `refreshToken` | String | Access Token 갱신에 사용되는 토큰 |
+| **`AccessTokenResponse`** | Access Token 갱신 응답 (Refresh Token은 쿠키로만 응답) | `accessToken` | String | 실제 API 호출에 사용되는 JWT |
 | **`UserDetailResponse`** | 사용자 정보 응답 | `id` | Long | 사용자 고유 ID |
 |  |  | `email` | String | 사용자 이메일 |
 |  |  | `nickname` | String | 사용자 닉네임 |
 |  |  | `role` | String | 사용자 권한 (`USER`/`ADMIN`) |
 | **`UserUpdateNicknameRequest`** | 닉네임 변경 요청 | `nickname` | String | 변경할 새로운 닉네임 |
+| **`UserAgreementRequest`** | 약관 동의 요청 | `agreements` | List<`AgreementItem`> | 동의할 약관 목록 |
+| **`UserAgreementRequest.AgreementItem`** | 약관 동의 항목 | `agreementType` | AgreementType (Enum) | 약관 타입 (`TOS`: 이용약관, `PP`: 개인정보처리방침) |
+|  |  | `version` | String | 약관 버전 (예: `TOS_20241215`) |
+| **`UserAgreementResponse`** | 약관 동의 이력 응답 | `id` | Long | 약관 동의 이력 고유 ID |
+|  |  | `agreementType` | AgreementType (Enum) | 약관 타입 (`TOS`, `PP`) |
+|  |  | `agreementVersion` | String | 동의한 약관 버전 |
+|  |  | `agreedAt` | Instant | 동의 일시 (타임스탬프) |
 
 ---
 
@@ -28,6 +36,7 @@
 | **`ProjectCreateResponse`** | 프로젝트 생성 성공 응답              | `id`              | Long                    | 생성된 프로젝트 ID                 |
 |                             |                            | `name`            | String                  | 프로젝트 이름                     |
 |                             |                            | `createdAt`       | Instant                 | 생성 일시                       |
+|                             |                            | `webhookSecret`   | String                  | 생성된 Webhook Secret (평문, 생성 시에만 노출) |
 | **`ProjectUpdateResponse`** | 프로젝트 정보 수정 성공 응답           | `id`              | Long                    | 수정된 프로젝트 ID                 |
 |                             |                            | `updatedAt`       | Instant                 | 최종 수정 일시                    |
 | **`ProjectDetailResponse`** | 프로젝트 상세 정보 응답              | `id`              | Long                    | 프로젝트 고유 ID                  |
@@ -36,6 +45,7 @@
 |                             |                            | `ownerId`         | Long                    | 생성자 사용자 ID                  |
 |                             |                            | `ownerNickName`   | String                  | 생성자(PO) 닉네임                 |
 |                             |                            | `slackWebhookUrl` | String                  | 슬랙 웹훅 URL                   |
+|                             |                            | `currentUserMemberRole` | String            | 현재 로그인된 유저의 프로젝트 멤버 권한 (`OWNER`/`MANAGER`/`DEVELOPER`/`VIEWER`) |
 |                             |                            | `createdAt`       | Instant                 | 생성 일시                       |
 |                             |                            | `updatedAt`       | Instant                 | 최종 수정 일시                    |
 | **`ProjectResponse`**       | 프로젝트 목록 개별 응답              | `id`              | Long                    | 프로젝트 고유 ID                  |
@@ -75,6 +85,7 @@
 | **`CorsOriginRequest`** | Origin 추가 요청 | `originUrl` | String | 허용할 Origin URL |
 | **`CorsOriginResponse`** | Origin 정보 응답 | `id` | Long | `ProjectCorsOrigin` 고유 ID |
 |  |  | `originUrl` | String | 허용된 Origin URL |
+|  |  | `createdAt` | Instant | CORS Origin 생성 일시 |
 
 ---
 

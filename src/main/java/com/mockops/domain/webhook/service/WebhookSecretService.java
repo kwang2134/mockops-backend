@@ -1,7 +1,7 @@
 package com.mockops.domain.webhook.service;
 
-import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.domain.project.role.MemberRole;
+import com.mockops.domain.project.service.ProjectMemberService;
 import com.mockops.domain.webhook.entity.WebhookSecret;
 import com.mockops.domain.webhook.repository.WebhookSecretRepository;
 import com.mockops.global.exception.ErrorCode;
@@ -36,8 +36,8 @@ public class WebhookSecretService {
      * @return WebhookSecret 엔티티
      */
     public WebhookSecret getWebhookSecretByProjectId(Long projectId, Long currentUserId) {
-        // 권한 검증: OWNER만 조회 가능
-        projectMemberService.validateOwner(projectId, currentUserId);
+        // 권한 검증: DEVELOPER 이상 조회 가능 (JWT 발급 기능만 허용)
+        projectMemberService.validateMemberPermission(projectId, currentUserId, MemberRole.DEVELOPER);
 
         return webhookSecretRepository.findByProjectId(projectId)
                 .orElseThrow(() -> ErrorCode.WEBHOOK_SECRET_NOT_FOUND.domainException(
@@ -62,7 +62,11 @@ public class WebhookSecretService {
      * @return 생성된 WebhookSecret
      */
     @Transactional
-    public WebhookSecret createWebhookSecret(Long projectId) {
+    /**
+     * WebhookSecret 생성 (평문 반환)
+     * 프로젝트 생성 시 사용 - 평문 secret을 반환하여 사용자에게 제공
+     */
+    public WebhookSecretCreateResult createWebhookSecretWithRaw(Long projectId) {
         // 이미 존재하는지 확인
         if (webhookSecretRepository.existsByProjectId(projectId)) {
             throw ErrorCode.WEBHOOK_SECRET_ALREADY_EXISTS.domainException(
@@ -82,9 +86,21 @@ public class WebhookSecretService {
 
         WebhookSecret saved = webhookSecretRepository.save(webhookSecret);
 
-        log.info("WebhookSecret 생성 완료: projectId={}, webhookSecretId={}", projectId, saved.getId());
+        log.info("WebhookSecret 생성 완료 (평문 포함): projectId={}, webhookSecretId={}", projectId, saved.getId());
 
-        return saved;
+        return new WebhookSecretCreateResult(saved, rawSecretKey);
+    }
+
+    /**
+     * WebhookSecret 생성 결과 (평문 포함)
+     */
+    public record WebhookSecretCreateResult(WebhookSecret webhookSecret, String rawSecretKey) {}
+
+    /**
+     * WebhookSecret 생성 (내부용 - 평문 반환 안 함)
+     */
+    public WebhookSecret createWebhookSecret(Long projectId) {
+        return createWebhookSecretWithRaw(projectId).webhookSecret();
     }
 
     /**

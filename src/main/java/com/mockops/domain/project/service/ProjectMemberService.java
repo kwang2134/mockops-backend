@@ -78,28 +78,28 @@ public class ProjectMemberService {
     }
 
     /**
-     * 커서 기반 페이징으로 프로젝트 멤버 조회
+     * Offset 기반 페이징으로 프로젝트 멤버 조회
+     * 권한 순서로 정렬: OWNER -> MANAGER -> DEVELOPER -> VIEWER
+     * 같은 권한 내에서는 ID 오름차순
      */
-    public List<ProjectMember> getProjectMembersByProjectIdWithCursor(Long projectId, Long cursorId, int size) {
-        Pageable pageable = PageRequest.of(0, size + 1); // hasNext 판단을 위해 1개 더 조회
-
-        if (cursorId == null) {
-            return projectMemberRepository.findByProjectIdOrderByIdAsc(projectId, pageable);
-        } else {
-            return projectMemberRepository.findByProjectIdAndIdGreaterThanOrderByIdAsc(projectId, cursorId, pageable);
-        }
+    public List<ProjectMember> getProjectMembersByProjectIdWithOffset(Long projectId, int offset, int size) {
+        Pageable pageable = PageRequest.of(offset / size, size + 1); // hasNext 판단을 위해 1개 더 조회
+        return projectMemberRepository.findByProjectIdOrderByMemberRoleAscIdAsc(projectId, pageable);
     }
 
     /**
-     * 프로젝트 멤버 목록 조회 (커서 기반 페이징) - Response DTO 반환
+     * 프로젝트 멤버 목록 조회 (Offset 기반 페이징) - Response DTO 반환
      * 권한: PROJECT_MEMBER 이상
      */
-    public MemberListResponse getMembersWithPagination(Long projectId, Long currentUserId, Long cursorId, int size) {
+    public MemberListResponse getMembersWithPagination(Long projectId, Long currentUserId, Integer offset, int size) {
         // 권한 검증: 프로젝트 멤버 여부 확인
         validateMemberPermission(projectId, currentUserId, MemberRole.VIEWER);
 
-        // 데이터베이스 레벨에서 커서 기반 페이징 처리
-        List<ProjectMember> members = getProjectMembersByProjectIdWithCursor(projectId, cursorId, size);
+        // offset이 null이면 0으로 처리
+        int actualOffset = (offset == null) ? 0 : offset;
+
+        // 데이터베이스 레벨에서 offset 기반 페이징 처리
+        List<ProjectMember> members = getProjectMembersByProjectIdWithOffset(projectId, actualOffset, size);
 
         // hasNext 계산
         boolean hasNext = members.size() > size;
@@ -115,12 +115,10 @@ public class ProjectMemberService {
                 })
                 .collect(Collectors.toList());
 
-        // nextCursorId 계산
-        Long nextCursorId = pagedMembers.isEmpty()
-                ? null
-                : pagedMembers.get(pagedMembers.size() - 1).getId();
+        // nextOffset 계산
+        Integer nextOffset = hasNext ? actualOffset + size : null;
 
-        return new MemberListResponse(memberResponses, hasNext, nextCursorId);
+        return new MemberListResponse(memberResponses, hasNext, nextOffset);
     }
 
     /**

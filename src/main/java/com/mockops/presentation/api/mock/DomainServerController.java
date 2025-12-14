@@ -33,14 +33,14 @@ public class DomainServerController implements DomainServerDocs {
      */
     @Override
     @GetMapping("/projects/{projectId}/servers")
-    public ResponseEntity<UnifiedResponse<Page<DomainServerResponse>>> getServersByProject(
+    public ResponseEntity<UnifiedResponse<Page<DomainServerSimpleResponse>>> getServersByProject(
         @PathVariable Long projectId,
         @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
         @AuthenticationPrincipal Long userId
     ) {
         log.info("프로젝트의 서버 목록 조회: projectId={}, userId={}", projectId, userId);
 
-        Page<DomainServerResponse> response = domainServerService.getServersByProjectWithResponse(
+        Page<DomainServerSimpleResponse> response = domainServerService.getServersByProjectWithResponse(
             projectId, userId, pageable
         );
 

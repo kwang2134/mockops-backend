@@ -54,23 +54,23 @@ public class ProjectMemberController implements ProjectMemberDocs {
     }
 
     /**
-     * 프로젝트 팀원 목록 조회 (커서 기반 페이징)
-     * GET /api/v1/projects/{projectId}/members?size=20&cursorId=123
+     * 프로젝트 팀원 목록 조회 (Offset 기반 페이징)
+     * GET /api/v1/projects/{projectId}/members?size=20&offset=0
      */
     @Override
     @GetMapping
     public ResponseEntity<UnifiedResponse<MemberListResponse>> getMembers(
             @PathVariable Long projectId,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Long cursorId,
+            @RequestParam(required = false) Integer offset,
             @AuthenticationPrincipal Long userId
     ) {
-        log.info("팀원 목록 조회: projectId={}, size={}, cursorId={}", projectId, size, cursorId);
+        log.info("팀원 목록 조회: projectId={}, size={}, offset={}", projectId, size, offset);
 
         MemberListResponse response = projectMemberService.getMembersWithPagination(
                 projectId,
                 userId,
-                cursorId,
+                offset,
                 size
         );
         return ResponseEntity.ok(UnifiedResponse.success(response));

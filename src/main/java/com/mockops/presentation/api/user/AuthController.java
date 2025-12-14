@@ -5,6 +5,7 @@ import com.mockops.global.common.UnifiedResponse;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.global.util.CookieUtils;
 import com.mockops.presentation.api.user.docs.AuthDocs;
+import com.mockops.presentation.api.user.dto.AccessTokenResponse;
 import com.mockops.presentation.api.user.dto.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,11 +30,12 @@ public class AuthController implements AuthDocs {
 
     /**
      * Access Token 갱신
-     * Refresh Token은 HttpOnly Cookie로 전달받고, 새로운 RefreshToken도 Cookie로 응답
+     * Refresh Token은 HttpOnly Cookie로 전달받고, 새로운 RefreshToken도 HttpOnly Cookie로만 응답
+     * 응답 Body에는 Access Token만 포함됨
      */
     @Override
     @GetMapping("/token/refresh")
-    public ResponseEntity<UnifiedResponse<TokenResponse>> refreshToken(
+    public ResponseEntity<UnifiedResponse<AccessTokenResponse>> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response) {
         String refreshToken = cookieUtils.getRefreshTokenFromCookie(request)
@@ -44,7 +46,10 @@ public class AuthController implements AuthDocs {
         // 새로운 RefreshToken을 HttpOnly Cookie로 설정 (Token Rotation)
         cookieUtils.setRefreshTokenCookie(response, tokenResponse.refreshToken(), isSecure);
 
-        return ResponseEntity.ok(UnifiedResponse.success(tokenResponse));
+        // 응답 Body에는 Access Token만 포함
+        return ResponseEntity.ok(UnifiedResponse.success(
+                new AccessTokenResponse(tokenResponse.accessToken())
+        ));
     }
 
     /**

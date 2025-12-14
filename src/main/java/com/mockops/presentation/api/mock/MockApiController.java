@@ -1,7 +1,9 @@
 package com.mockops.presentation.api.mock;
 
+import com.mockops.domain.job.service.JobTrackingService;
 import com.mockops.domain.mock.service.MockApiService;
 import com.mockops.global.common.UnifiedResponse;
+import com.mockops.presentation.api.job.dto.JobStatusResponse;
 import com.mockops.presentation.api.mock.docs.MockApiDocs;
 import com.mockops.presentation.api.mock.dto.mockapi.*;
 import jakarta.validation.Valid;
@@ -23,24 +25,26 @@ import org.springframework.web.multipart.MultipartFile;
 public class MockApiController implements MockApiDocs {
 
     private final MockApiService mockApiService;
+    private final JobTrackingService jobTrackingService;
 
     /**
-     * 서버의 Mock API 목록 조회 (커서 기반 페이징)
+     * 서버의 Mock API 목록 조회 (복합 커서 페이징, name 정렬)
      * GET /api/v1/servers/{serverId}/mock-apis
      */
     @Override
     @GetMapping("/servers/{serverId}/mock-apis")
     public ResponseEntity<UnifiedResponse<MockApiListResponse>> getMockApisByServer(
         @PathVariable Long serverId,
-        @RequestParam(required = false) Long cursor,
+        @RequestParam(required = false) String lastNameCursor,
+        @RequestParam(required = false) Long lastIdCursor,
         @RequestParam(defaultValue = "20") int size,
         @AuthenticationPrincipal Long userId
     ) {
-        log.info("서버의 Mock API 목록 조회: serverId={}, cursor={}, size={}, userId={}",
-            serverId, cursor, size, userId);
+        log.info("서버의 Mock API 목록 조회: serverId={}, lastNameCursor={}, lastIdCursor={}, size={}, userId={}",
+            serverId, lastNameCursor, lastIdCursor, size, userId);
 
         MockApiListResponse response = mockApiService.getMockApisByServerWithResponse(
-            serverId, cursor, size, userId
+            serverId, lastNameCursor, lastIdCursor, size, userId
         );
 
         return ResponseEntity.ok(UnifiedResponse.success(response));
@@ -107,7 +111,7 @@ public class MockApiController implements MockApiDocs {
 
         MockApiBulkResponse response = mockApiService.createMockApisFromFile(serverId, file, userId);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
             .body(UnifiedResponse.success(response));
     }
 
@@ -168,6 +172,22 @@ public class MockApiController implements MockApiDocs {
         log.info("Mock API 상태 토글 요청: mockApiId={}, userId={}", mockApiId, userId);
 
         MockApiResponse response = mockApiService.toggleMockApiStatusWithResponse(mockApiId, userId);
+        return ResponseEntity.ok(UnifiedResponse.success(response));
+    }
+
+    /**
+     * 서버의 진행 중인 Job 조회
+     * GET /api/v1/servers/{serverId}/mock-apis/active-job
+     */
+    @Override
+    @GetMapping("/servers/{serverId}/mock-apis/active-job")
+    public ResponseEntity<UnifiedResponse<JobStatusResponse>> getActiveJob(
+        @PathVariable Long serverId,
+        @AuthenticationPrincipal Long userId
+    ) {
+        log.info("서버의 진행 중인 Job 조회 요청: serverId={}, userId={}", serverId, userId);
+
+        JobStatusResponse response = jobTrackingService.getActiveJobByServer(serverId, userId);
         return ResponseEntity.ok(UnifiedResponse.success(response));
     }
 }

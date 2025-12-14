@@ -139,6 +139,7 @@ class ProjectServiceTest {
         String description = "Test Description";
         Long ownerId = 1L;
         String slackWebhookUrl = "https://hooks.slack.com/test";
+        String testWebhookSecret = "test-webhook-secret-123";
 
         Project project = Project.builder()
                 .name(name)
@@ -147,8 +148,12 @@ class ProjectServiceTest {
                 .slackWebhookUrl(slackWebhookUrl)
                 .build();
 
+        // WebhookSecretCreateResult mock
+        var webhookSecretResult = new WebhookSecretService.WebhookSecretCreateResult(null, testWebhookSecret);
+
         given(projectRepository.existsByOwnerIdAndName(ownerId, name)).willReturn(false);
         given(projectRepository.save(any(Project.class))).willReturn(project);
+        given(webhookSecretService.createWebhookSecretWithRaw(any())).willReturn(webhookSecretResult);
 
         // when
         ProjectCreateResponse response = projectService.createProject(name, description, ownerId, slackWebhookUrl);
@@ -156,9 +161,11 @@ class ProjectServiceTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo(name);
+        assertThat(response.getWebhookSecret()).isEqualTo(testWebhookSecret);
         verify(projectRepository).existsByOwnerIdAndName(ownerId, name);
         verify(projectRepository).save(any(Project.class));
         verify(projectMemberService).addProjectMember(any(), eq(ownerId), any());
+        verify(webhookSecretService).createWebhookSecretWithRaw(any());
     }
 
     @Test

@@ -19,12 +19,25 @@ public class ProjectCreateResponse {
     private Long id;
     private String name;
     private Instant createdAt;
+    private String webhookSecret;  // Webhook Secret (평문, 생성 시에만 노출)
 
     public static ProjectCreateResponse from(Project project) {
         return ProjectCreateResponse.builder()
             .id(project.getId())
             .name(project.getName())
             .createdAt(project.getCreatedAt())
+            .build();
+    }
+
+    /**
+     * Webhook Secret 포함 버전
+     */
+    public static ProjectCreateResponse from(Project project, String webhookSecret) {
+        return ProjectCreateResponse.builder()
+            .id(project.getId())
+            .name(project.getName())
+            .createdAt(project.getCreatedAt())
+            .webhookSecret(webhookSecret)
             .build();
     }
 }

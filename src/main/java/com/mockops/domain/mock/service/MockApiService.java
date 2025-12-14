@@ -62,14 +62,25 @@ public class MockApiService {
     }
 
     /**
-     * 서버의 Mock API 목록 조회 (커서 기반 페이징, 그룹핑) - DTO 반환
+     * 서버의 Mock API 목록 조회 (복합 커서 페이징, name 정렬, 그룹핑) - DTO 반환
      */
-    public MockApiListResponse getMockApisByServerWithResponse(Long serverId, Long cursorId, int size, Long currentUserId) {
-        // size + 1 개를 조회하여 hasNext 판단
-        List<MockApi> mockApis = getMockApisByServer(serverId, cursorId, size + 1, currentUserId);
-
-        // DomainServer 정보 조회 (fullEndpoint 생성을 위해)
+    public MockApiListResponse getMockApisByServerWithResponse(Long serverId, String lastNameCursor, Long lastIdCursor, int size, Long currentUserId) {
+        // 권한 검증
         DomainServer server = domainServerService.getDomainServerById(serverId);
+        projectMemberService.validateMemberPermission(server.getProjectId(), currentUserId, MemberRole.VIEWER);
+
+        // size + 1 개를 조회하여 hasNext 판단
+        PageRequest pageRequest = PageRequest.of(0, size + 1);
+
+        List<MockApi> mockApis;
+        if (lastNameCursor == null || lastIdCursor == null) {
+            // 첫 페이지 조회
+            mockApis = mockApiRepository.findByServerIdOrderByNameAscIdAsc(serverId, pageRequest);
+        } else {
+            // 복합 커서 이후 데이터 조회
+            mockApis = mockApiRepository.findByServerIdWithCompositeCursor(serverId, lastNameCursor, lastIdCursor, pageRequest);
+        }
+
         Long projectId = server.getProjectId();
         String serverSlug = server.getSlug();
 
@@ -77,7 +88,7 @@ public class MockApiService {
         boolean hasNext = mockApis.size() > size;
         List<MockApi> actualMockApis = hasNext ? mockApis.subList(0, size) : mockApis;
 
-        // name으로 그룹핑
+        // name으로 그룹핑 (이미 name 순서로 정렬되어 있음)
         var groupedByName = actualMockApis.stream()
             .map(mockApi -> MockApiResponse.from(mockApi, projectId, serverSlug))
             .collect(java.util.stream.Collectors.groupingBy(
@@ -91,29 +102,16 @@ public class MockApiService {
             .map(entry -> MockApiGroupDto.of(entry.getKey(), entry.getValue()))
             .toList();
 
-        // nextCursorId 계산 (hasNext가 true면 마지막 항목의 ID)
-        Long nextCursorId = hasNext ? actualMockApis.get(actualMockApis.size() - 1).getId() : null;
-
-        return MockApiListResponse.of(groups, nextCursorId, hasNext);
-    }
-
-    /**
-     * 서버의 Mock API 목록 조회 (커서 기반 페이징) - 내부용
-     */
-    public List<MockApi> getMockApisByServer(Long serverId, Long cursorId, int pageSize, Long currentUserId) {
-        // 권한 검증
-        DomainServer server = domainServerService.getDomainServerById(serverId);
-        projectMemberService.validateMemberPermission(server.getProjectId(), currentUserId, MemberRole.VIEWER);
-
-        PageRequest pageRequest = PageRequest.of(0, pageSize);
-
-        if (cursorId == null) {
-            // 첫 페이지 조회
-            return mockApiRepository.findByServerIdOrderByIdAsc(serverId, pageRequest);
-        } else {
-            // 커서 이후 데이터 조회
-            return mockApiRepository.findByServerIdAndIdGreaterThanOrderByIdAsc(serverId, cursorId, pageRequest);
+        // nextCursor 계산 (hasNext가 true면 마지막 항목의 name과 id)
+        String nextNameCursor = null;
+        Long nextIdCursor = null;
+        if (hasNext && !actualMockApis.isEmpty()) {
+            MockApi lastMockApi = actualMockApis.get(actualMockApis.size() - 1);
+            nextNameCursor = lastMockApi.getName();
+            nextIdCursor = lastMockApi.getId();
         }
+
+        return MockApiListResponse.of(groups, nextNameCursor, nextIdCursor, hasNext);
     }
 
     /**
@@ -226,7 +224,7 @@ public class MockApiService {
         // 기존 캐시 삭제 (변경 전 엔드포인트 경로 기준)
         mockApiCachePort.evictMockApi(
             server.getProjectId(),
-            server.getName(),
+            server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
             mockApi.getHttpMethod(),
             mockApi.getEndpointPath()
         );
@@ -249,7 +247,7 @@ public class MockApiService {
         if (!mockApi.getEndpointPath().equals(endpointPath) || mockApi.getHttpMethod() != httpMethod) {
             mockApiCachePort.evictMockApi(
                 server.getProjectId(),
-                server.getName(),
+                server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
                 httpMethod,
                 endpointPath
             );
@@ -278,7 +276,7 @@ public class MockApiService {
         // 캐시 삭제
         mockApiCachePort.evictMockApi(
             server.getProjectId(),
-            server.getName(),
+            server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
             mockApi.getHttpMethod(),
             mockApi.getEndpointPath()
         );
@@ -315,7 +313,7 @@ public class MockApiService {
         // 캐시 삭제 (활성화 상태 변경으로 인한 캐시 무효화)
         mockApiCachePort.evictMockApi(
             server.getProjectId(),
-            server.getName(),
+            server.getSlug(),  // serverSlug와 일치시켜야 캐시 삭제 가능
             mockApi.getHttpMethod(),
             mockApi.getEndpointPath()
         );
