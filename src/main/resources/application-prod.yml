@@ -106,5 +106,5 @@ logging:
 # 약관 버전 관리
 legal:
   agreements:
-    tos-version: ${LEGAL_TOS_VERSION:TOS_20241215}
-    pp-version: ${LEGAL_PP_VERSION:PP_20241215_v1.0}
+    tos-version: ${LEGAL_TOS_VERSION}
+    pp-version: ${LEGAL_PP_VERSION}
