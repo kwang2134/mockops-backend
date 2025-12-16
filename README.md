@@ -2,6 +2,8 @@
 
 개발자: [김광현](https://github.com/kwang2134)
 
+<img width="500" height="500" alt="logo-remove" src="https://github.com/user-attachments/assets/c8a571a4-b81a-49a8-818f-472a7b00b430" />
+
 [MockOps!](https://mockops.cloud)
 
 ## 프로젝트 소개
@@ -11,8 +13,9 @@
 
 Mock API 스펙을 통해 각 서버의 API 설계를 한눈에 파악할 수 있으며, 개발 과정에서 도움이 되도록 **간단한 헬스 체크**와 **서버 상태 표시** 기능도 제공합니다.
 
-<!-- 서비스 스크린샷 이미지 위치 -->
-
+<img width="1920" height="1440" alt="main1" src="https://github.com/user-attachments/assets/9b5bce41-a2ef-40bb-86a9-1d92620bfce5" />
+<img width="1920" height="1440" alt="main2" src="https://github.com/user-attachments/assets/c3eec1c4-eb9e-427a-beec-f5d072f098ca" />
+<img width="1920" height="1440" alt="main3" src="https://github.com/user-attachments/assets/1bd505be-7f26-4386-8b0f-a6cd575832d5" />
 
 <br>
 
@@ -51,10 +54,12 @@ Mock API 스펙을 통해 각 서버의 API 설계를 한눈에 파악할 수 �
 
 ## ERD
 <!-- ERD 이미지 위치 -->
+<img width="1560" height="1052" alt="mockops" src="https://github.com/user-attachments/assets/a93a7f65-551f-4516-b81c-d0b5f884be4a" />
 
 
 ## 시스템 아키텍처
 <!-- 시스템 아키텍처 이미지 위치 -->
+<img width="1545" height="1779" alt="sys_arcr_bg" src="https://github.com/user-attachments/assets/437359f5-7513-4bfa-811a-6a34215ba294" />
 
 
 ## 핵심 기능
