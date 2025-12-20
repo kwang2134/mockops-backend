@@ -7,7 +7,6 @@ import com.mockops.global.util.CookieUtils;
 import com.mockops.presentation.api.user.docs.AuthDocs;
 import com.mockops.presentation.api.user.dto.AccessTokenResponse;
 import com.mockops.presentation.api.user.dto.TokenResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -42,28 +41,10 @@ public class AuthController implements AuthDocs {
         String refreshToken = cookieUtils.getRefreshTokenFromCookie(request)
                 .orElseThrow(() -> ErrorCode.INVALID_TOKEN.serviceException("Refresh Token이 쿠키에 없습니다."));
 
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            log.info("쿠키 없음");
-        }
-
-        String refresh = null;
-        for (Cookie cookie : cookies) {
-            if ("refreshToken".equals(cookie.getName())) {
-                refresh = cookie.getValue();
-                break;
-            }
-        }
-
-        log.info("요청의 refresh={}", refresh);
-
-
         TokenResponse tokenResponse = authService.refreshAccessToken(refreshToken);
 
         // 새로운 RefreshToken을 HttpOnly Cookie로 설정 (Token Rotation)
         cookieUtils.setRefreshTokenCookie(response, tokenResponse.refreshToken(), isSecure);
-
-        log.info("새로 발급한 refresh={}", tokenResponse.refreshToken());
 
         // 응답 Body에는 Access Token만 포함
         return ResponseEntity.ok(UnifiedResponse.success(
