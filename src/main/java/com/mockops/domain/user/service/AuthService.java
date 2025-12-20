@@ -1,6 +1,7 @@
 package com.mockops.domain.user.service;
 
 import com.mockops.domain.user.entity.*;
+import com.mockops.domain.user.infrastructure.TokenRefreshCachePort;
 import com.mockops.domain.user.repository.AuthProviderRepository;
 import com.mockops.domain.user.repository.UserAgreementRepository;
 import com.mockops.domain.user.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,9 +31,17 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final CryptUtils cryptUtils;
     private final LegalProperties legalProperties;
+    private final TokenRefreshCachePort tokenRefreshCachePort;
 
     @Transactional
     public TokenResponse refreshAccessToken(String refreshToken) {
+
+        Optional<TokenResponse> cachedToken = tokenRefreshCachePort.getNewTokenIfInGracePeriod(refreshToken);
+
+        if (cachedToken.isPresent()) {
+            return cachedToken.get();
+        }
+
         // Refresh Token 검증
         if (!jwtProvider.validateToken(refreshToken)) {
             throw ErrorCode.INVALID_TOKEN.serviceException("Refresh Token이 유효하지 않습니다.");
@@ -76,7 +86,11 @@ public class AuthService {
         String encryptedRefreshToken = cryptUtils.encrypt(newRefreshToken);
         authProviders.forEach(provider -> provider.updateRefreshToken(encryptedRefreshToken));
 
-        return new TokenResponse(newAccessToken, newRefreshToken);
+        TokenResponse newToken = new TokenResponse(newAccessToken, newRefreshToken);
+
+        tokenRefreshCachePort.saveWithGracePeriod(refreshToken, newToken);
+
+        return newToken;
     }
 
     /**
