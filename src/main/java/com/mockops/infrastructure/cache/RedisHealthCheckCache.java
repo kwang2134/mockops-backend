@@ -1,5 +1,6 @@
 package com.mockops.infrastructure.cache;
 
+import com.mockops.domain.healthcheck.infrastructure.HealthCheckCachePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -10,7 +11,7 @@ import java.util.Set;
 
 /**
  * Redis 기반 헬스 체크 작업 목록 관리
- * 주기별 Redis Set에 DomainServer 헬스 체크 정보를 저장/조회/삭제
+ * HealthCheckCachePort 인터페이스 구현
  *
  * Key Pattern: healthcheck:jobs:{interval}
  * Value Format: {serverId}:{healthCheckPath}
@@ -22,19 +23,13 @@ import java.util.Set;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedisHealthCheckCache {
+public class RedisHealthCheckCache implements HealthCheckCachePort {
 
     private static final String KEY_PREFIX = "healthcheck:jobs:";
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    /**
-     * 헬스 체크 작업 추가
-     *
-     * @param interval 헬스 체크 주기 (5m, 10m, 30m, 1h)
-     * @param serverId 서버 ID
-     * @param healthCheckPath 헬스 체크 경로 (예: /api/health)
-     */
+    @Override
     public void addHealthCheckJob(String interval, Long serverId, String healthCheckPath) {
         String key = generateKey(interval);
         String value = generateValue(serverId, healthCheckPath);
@@ -44,13 +39,7 @@ public class RedisHealthCheckCache {
         log.info("헬스 체크 작업 추가: interval={}, serverId={}, path={}", interval, serverId, healthCheckPath);
     }
 
-    /**
-     * 헬스 체크 작업 제거
-     *
-     * @param interval 헬스 체크 주기 (5m, 10m, 30m, 1h)
-     * @param serverId 서버 ID
-     * @param healthCheckPath 헬스 체크 경로
-     */
+    @Override
     public void removeHealthCheckJob(String interval, Long serverId, String healthCheckPath) {
         String key = generateKey(interval);
         String value = generateValue(serverId, healthCheckPath);
@@ -60,12 +49,7 @@ public class RedisHealthCheckCache {
         log.info("헬스 체크 작업 제거: interval={}, serverId={}, path={}", interval, serverId, healthCheckPath);
     }
 
-    /**
-     * 특정 주기의 모든 헬스 체크 작업 조회
-     *
-     * @param interval 헬스 체크 주기 (5m, 10m, 30m, 1h)
-     * @return 헬스 체크 작업 정보 Set (형식: "serverId:path")
-     */
+    @Override
     public Set<String> getAllHealthCheckJobs(String interval) {
         String key = generateKey(interval);
         Set<Object> members = redisTemplate.opsForSet().members(key);
@@ -86,14 +70,7 @@ public class RedisHealthCheckCache {
         return jobs;
     }
 
-    /**
-     * 특정 서버의 헬스 체크 작업을 다른 주기로 이동 (Atomic Update)
-     *
-     * @param oldInterval 기존 주기
-     * @param newInterval 새로운 주기
-     * @param serverId 서버 ID
-     * @param healthCheckPath 헬스 체크 경로
-     */
+    @Override
     public void moveHealthCheckJob(String oldInterval, String newInterval, Long serverId, String healthCheckPath) {
         // 기존 주기에서 제거
         removeHealthCheckJob(oldInterval, serverId, healthCheckPath);
@@ -104,23 +81,14 @@ public class RedisHealthCheckCache {
         log.info("헬스 체크 작업 이동: serverId={}, {} -> {}", serverId, oldInterval, newInterval);
     }
 
-    /**
-     * 특정 주기의 헬스 체크 작업 개수 조회
-     *
-     * @param interval 헬스 체크 주기
-     * @return 작업 개수
-     */
+    @Override
     public Long getHealthCheckJobCount(String interval) {
         String key = generateKey(interval);
         Long size = redisTemplate.opsForSet().size(key);
         return size != null ? size : 0L;
     }
 
-    /**
-     * 특정 주기의 모든 헬스 체크 작업 삭제
-     *
-     * @param interval 헬스 체크 주기
-     */
+    @Override
     public void clearHealthCheckJobs(String interval) {
         String key = generateKey(interval);
         redisTemplate.delete(key);
@@ -147,35 +115,5 @@ public class RedisHealthCheckCache {
      */
     private String generateValue(Long serverId, String healthCheckPath) {
         return serverId + ":" + healthCheckPath;
-    }
-
-    /**
-     * Redis Value 파싱 (serverId 추출)
-     *
-     * @param value Redis Value (예: "123:/api/health")
-     * @return 서버 ID
-     */
-    public static Long parseServerId(String value) {
-        if (value == null || !value.contains(":")) {
-            throw new IllegalArgumentException("Invalid health check job value: " + value);
-        }
-
-        String[] parts = value.split(":", 2);
-        return Long.parseLong(parts[0]);
-    }
-
-    /**
-     * Redis Value 파싱 (healthCheckPath 추출)
-     *
-     * @param value Redis Value (예: "123:/api/health")
-     * @return 헬스 체크 경로
-     */
-    public static String parseHealthCheckPath(String value) {
-        if (value == null || !value.contains(":")) {
-            throw new IllegalArgumentException("Invalid health check job value: " + value);
-        }
-
-        String[] parts = value.split(":", 2);
-        return parts[1];
     }
 }
