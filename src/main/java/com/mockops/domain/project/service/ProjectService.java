@@ -92,6 +92,31 @@ public class ProjectService {
     }
 
     /**
+     * 프로젝트 검색 (제목, 오너 ID)
+     * 권한: 인증된 사용자
+     */
+    public ProjectPageResponse searchProjects(String name, Long ownerId, Pageable pageable) {
+        // QueryDSL을 사용한 동적 검색
+        Page<Project> projectPage = projectRepository.searchProjects(name, ownerId, pageable);
+
+        // DTO 변환
+        List<ProjectResponse> projectResponses = projectPage.getContent().stream()
+                .map(project -> {
+                    User owner = userService.getUserById(project.getOwnerId());
+                    Integer unreadNotificationCount = notificationService.getUnreadCountByProject(project);
+                    return ProjectResponse.from(project, owner.getNickname(), unreadNotificationCount);
+                })
+                .collect(Collectors.toList());
+
+        return new ProjectPageResponse(
+                projectResponses,
+                projectPage.getTotalPages(),
+                projectPage.getTotalElements(),
+                pageable.getPageNumber()
+        );
+    }
+
+    /**
      * 프로젝트 상세 조회 - Response DTO 반환
      * 권한: PROJECT_MEMBER 이상
      */

@@ -71,6 +71,12 @@ dependencies {
     implementation 'org.springframework.retry:spring-retry:2.0.11'
     implementation 'org.springframework:spring-aspects'
 
+    //QueryDsl
+    implementation 'io.github.openfeign.querydsl:querydsl-jpa:6.11'
+    annotationProcessor "io.github.openfeign.querydsl:querydsl-apt:6.11:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
     // 모니터링
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'

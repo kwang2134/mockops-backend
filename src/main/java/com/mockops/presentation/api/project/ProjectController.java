@@ -118,4 +118,22 @@ public class ProjectController implements ProjectDocs {
 
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * 프로젝트 검색
+     * GET /api/v1/projects/search
+     */
+    @Override
+    @GetMapping("/search")
+    public ResponseEntity<UnifiedResponse<ProjectPageResponse>> searchProjects(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long ownerId,
+            Pageable pageable,
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("프로젝트 검색 요청: name={}, ownerId={}, userId={}", name, ownerId, userId);
+
+        ProjectPageResponse response = projectService.searchProjects(name, ownerId, pageable);
+        return ResponseEntity.ok(UnifiedResponse.success(response));
+    }
 }
