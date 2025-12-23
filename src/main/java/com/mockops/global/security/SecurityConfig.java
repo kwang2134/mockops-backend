@@ -98,7 +98,7 @@ public class SecurityConfig {
                         // test용 JWT 발급
                         .requestMatchers("/api/v1/test/**").permitAll()
                         // actuator
-                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                         // 나머지는 모두 인증 필요
                         .anyRequest().authenticated()
                 )

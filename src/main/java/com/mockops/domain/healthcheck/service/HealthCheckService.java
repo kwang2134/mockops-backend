@@ -1,16 +1,17 @@
 package com.mockops.domain.healthcheck.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mockops.domain.healthcheck.infrastructure.HealthCheckCachePort;
+import com.mockops.domain.healthcheck.infrastructure.HealthCheckFailurePort;
+import com.mockops.domain.healthcheck.util.HealthCheckJobParser;
 import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.ServerStatus;
 import com.mockops.domain.mock.repository.DomainServerRepository;
 import com.mockops.domain.notification.entity.NotificationType;
 import com.mockops.domain.notification.service.NotificationService;
 import com.mockops.domain.notification.service.SlackNotificationService;
-import com.mockops.infrastructure.cache.RedisHealthCheckCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 도메인 서버 헬스 체크 서비스
@@ -32,13 +32,12 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class HealthCheckService {
 
-    private static final String FAILURE_COUNT_KEY_PREFIX = "healthcheck:failures:";
     private static final int FAILURE_THRESHOLD = 3; // 3회 연속 실패 시 ERROR 상태로 전환
 
     private final WebClient healthCheckWebClient;
     private final DomainServerRepository domainServerRepository;
-    private final RedisHealthCheckCache redisHealthCheckCache;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final HealthCheckCachePort healthCheckCachePort;
+    private final HealthCheckFailurePort healthCheckFailurePort;
     private final SlackNotificationService slackNotificationService;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
@@ -51,7 +50,7 @@ public class HealthCheckService {
     public void performBulkHealthCheck(String interval) {
         log.info("헬스 체크 벌크 작업 시작: interval={}", interval);
 
-        Set<String> jobs = redisHealthCheckCache.getAllHealthCheckJobs(interval);
+        Set<String> jobs = healthCheckCachePort.getAllHealthCheckJobs(interval);
 
         if (jobs.isEmpty()) {
             log.debug("헬스 체크 대상 없음: interval={}", interval);
@@ -62,8 +61,8 @@ public class HealthCheckService {
 
         for (String job : jobs) {
             try {
-                Long serverId = RedisHealthCheckCache.parseServerId(job);
-                String healthCheckPath = RedisHealthCheckCache.parseHealthCheckPath(job);
+                Long serverId = HealthCheckJobParser.parseServerId(job);
+                String healthCheckPath = HealthCheckJobParser.parseHealthCheckPath(job);
 
                 performHealthCheck(serverId, healthCheckPath, interval);
             } catch (Exception e) {
@@ -251,7 +250,7 @@ public class HealthCheckService {
      */
     private void handleHealthyServer(DomainServer server, ServerStatus previousStatus) {
         // 실패 카운트 초기화
-        resetFailureCount(server.getId());
+        healthCheckFailurePort.resetFailureCount(server.getId());
 
         // ERROR 상태에서 DEPLOYED로 복구
         if (previousStatus == ServerStatus.ERROR) {
@@ -276,7 +275,7 @@ public class HealthCheckService {
      */
     private void handleUnhealthyServer(DomainServer server, ServerStatus previousStatus, String interval, HealthCheckResult result) {
         // 실패 카운트 증가 (interval에 따라 적절한 TTL 설정)
-        int failureCount = incrementFailureCount(server.getId(), interval);
+        int failureCount = healthCheckFailurePort.incrementFailureCount(server.getId(), interval);
 
         log.warn("헬스 체크 실패: serverId={}, interval={}, failureCount={}/{}, error={}",
                 server.getId(), interval, failureCount, FAILURE_THRESHOLD, result.errorMessage());
@@ -296,54 +295,6 @@ public class HealthCheckService {
             // 서버 상태 변경 알림 생성
             createServerStatusChangeNotification(server, previousStatus, ServerStatus.ERROR);
         }
-    }
-
-    /**
-     * 서버의 연속 실패 카운트 증가
-     *
-     * @param serverId 서버 ID
-     * @param interval 헬스 체크 주기 (TTL 계산용)
-     * @return 현재 실패 카운트
-     */
-    private int incrementFailureCount(Long serverId, String interval) {
-        String key = FAILURE_COUNT_KEY_PREFIX + serverId;
-        Long count = redisTemplate.opsForValue().increment(key);
-
-        // interval에 따라 적절한 TTL 설정
-        // 3회 연속 실패를 감지하려면 (주기 * 4) 이상의 TTL이 필요
-        long ttlHours = calculateTTL(interval);
-        redisTemplate.expire(key, ttlHours, TimeUnit.HOURS);
-
-        log.debug("실패 카운트 증가: serverId={}, interval={}, count={}, ttl={}시간",
-                serverId, interval, count, ttlHours);
-
-        return count != null ? count.intValue() : 0;
-    }
-
-    /**
-     * interval에 따라 적절한 TTL 계산
-     *
-     * @param interval 헬스 체크 주기
-     * @return TTL (시간 단위)
-     */
-    private long calculateTTL(String interval) {
-        return switch (interval) {
-            case "5m" -> 1;   // 5분 * 4 = 20분 → 1시간이면 충분
-            case "10m" -> 1;  // 10분 * 4 = 40분 → 1시간이면 충분
-            case "30m" -> 2;  // 30분 * 4 = 2시간
-            case "1h" -> 4;   // 1시간 * 4 = 4시간
-            default -> 1;     // 기본값
-        };
-    }
-
-    /**
-     * 서버의 연속 실패 카운트 초기화
-     *
-     * @param serverId 서버 ID
-     */
-    private void resetFailureCount(Long serverId) {
-        String key = FAILURE_COUNT_KEY_PREFIX + serverId;
-        redisTemplate.delete(key);
     }
 
     /**
@@ -392,7 +343,7 @@ public class HealthCheckService {
         String interval = server.getHealthCheckInterval();
         String healthCheckPath = extractPath(server.getHealthCheckUrl());
 
-        redisHealthCheckCache.addHealthCheckJob(interval, server.getId(), healthCheckPath);
+        healthCheckCachePort.addHealthCheckJob(interval, server.getId(), healthCheckPath);
 
         log.info("헬스 체크 등록: serverId={}, interval={}, path={}", server.getId(), interval, healthCheckPath);
     }
@@ -406,10 +357,10 @@ public class HealthCheckService {
         String interval = server.getHealthCheckInterval();
         String healthCheckPath = extractPath(server.getHealthCheckUrl());
 
-        redisHealthCheckCache.removeHealthCheckJob(interval, server.getId(), healthCheckPath);
+        healthCheckCachePort.removeHealthCheckJob(interval, server.getId(), healthCheckPath);
 
         // 실패 카운트도 삭제
-        resetFailureCount(server.getId());
+        healthCheckFailurePort.resetFailureCount(server.getId());
 
         log.info("헬스 체크 제거: serverId={}, interval={}", server.getId(), interval);
     }
