@@ -69,7 +69,8 @@ public enum ErrorCode {
     // 파일 업로드 관련
     INVALID_FILE_FORMAT(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
     FILE_PARSE_ERROR(HttpStatus.BAD_REQUEST, "파일 파싱 중 오류가 발생했습니다."),
-    INVALID_OPENAPI_VERSION(HttpStatus.BAD_REQUEST, "지원하지 않는 OpenAPI 버전입니다.");
+    INVALID_OPENAPI_VERSION(HttpStatus.BAD_REQUEST, "지원하지 않는 OpenAPI 버전입니다."),
+    FILE_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다. (최대 5MB)");
 
     private final HttpStatus httpStatus;
     private final String message;

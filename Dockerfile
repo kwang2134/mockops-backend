@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM gradle:8.5-jdk21 AS builder
+FROM gradle:8.14-jdk21 AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY . .
 RUN gradle clean build -x test --no-daemon
 
 # Stage 2: Runtime
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
 
@@ -21,6 +21,11 @@ WORKDIR /app
 # Alpine 이미지의 기본 타임존은 UTC이므로 별도 설정 불필요
 # 프론트엔드에서 각 지역 시간대로 변환하여 표시
 ENV TZ=UTC
+
+# 🔑 Netty QUIC 네이티브 의존성
+RUN apt-get update \
+ && apt-get install -y libgcc-s1 \
+ && rm -rf /var/lib/apt/lists/*
 
 # 로그 디렉토리 생성
 RUN mkdir -p /var/log/mockops && \

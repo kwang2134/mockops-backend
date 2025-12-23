@@ -74,10 +74,26 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Prepare and Clean Image Name
+        id: clean_image
+        run: |
+          # 1. 원본 변수 출력 (디버그용)
+          echo "Original IMAGE_NAME: '${{ env.IMAGE_NAME }}'"
+          
+          # 2. IMAGE_NAME에서 모든 공백 문자, 제어 문자 (널 바이트 포함)를 제거합니다.
+          #    tr -d '[:space:]\0'를 사용하여 널 바이트까지 명시적으로 제거합니다.
+          CLEAN_IMAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | tr -d '[:cntrl:]')
+          
+          # 3. 정리된 변수를 다음 스텝에서 사용할 수 있도록 Actions Output에 저장합니다.
+          echo "CLEAN_IMAGE_NAME=${CLEAN_IMAGE_NAME}" >> $GITHUB_OUTPUT
+          
+          # 4. 정리된 변수 출력 (디버그용)
+          echo "Cleaned IMAGE_NAME: '${CLEAN_IMAGE_NAME}'"
+
       - name: Pull latest image from ECR
         run: |
           echo "📦 Pulling latest image from ECR..."
-          docker pull ${{ env.IMAGE_NAME }}
+          docker pull "${{ steps.clean_image.outputs.CLEAN_IMAGE_NAME }}"
 
       - name: Stop and remove existing container
         run: |
@@ -93,36 +109,41 @@ jobs:
       - name: Run new container
         run: |
           echo "🚀 Starting new container..."
+          CLEAN_IMAGE_NAME="${{ steps.clean_image.outputs.CLEAN_IMAGE_NAME }}"
           docker run -d --name ${{ env.CONTAINER_NAME }} \
             --restart unless-stopped \
             --network app_prod_network \
             -p 8080:8080 \
             -e SPRING_PROFILES_ACTIVE=prod \
-            -e SERVER_PORT=${{ secrets.SERVER_PORT }} \
-            -e SSL_ENABLED=${{ secrets.SSL_ENABLED }} \
-            -e DB_URL=${{ secrets.DB_URL }} \
-            -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e REDIS_HOST=${{ secrets.REDIS_HOST }} \
-            -e REDIS_PORT=${{ secrets.REDIS_PORT }} \
-            -e REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
-            -e OAUTH_GOOGLE_CLIENT_ID=${{ secrets.OAUTH_GOOGLE_CLIENT_ID }} \
-            -e OAUTH_GOOGLE_CLIENT_SECRET=${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }} \
-            -e OAUTH_GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }} \
-            -e OAUTH_GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e BASE_URL=${{ secrets.BASE_URL }} \
-            -e OAUTH2_REDIRECT_URL=${{ secrets.OAUTH2_REDIRECT_URL }} \
-            -e OAUTH2_ERROR_REDIRECT_URL=${{ secrets.OAUTH2_ERROR_REDIRECT_URL }} \
-            -e APP_FRONTEND_URL=${{ secrets.APP_FRONTEND_URL }} \
-            -e CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }} \
-            -e MAIL_HOST=${{ secrets.MAIL_HOST }} \
-            -e MAIL_PORT=${{ secrets.MAIL_PORT }} \
-            -e MAIL_USERNAME=${{ secrets.MAIL_USERNAME }} \
-            -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
+            -e JAVA_TOOL_OPTIONS="-Dreactor.netty.native.quiche.disable=true" \
+            -e SERVER_PORT="${{ secrets.SERVER_PORT }}" \
+            -e SSL_ENABLED="${{ secrets.SSL_ENABLED }}" \
+            -e DB_URL="${{ secrets.DB_URL }}" \
+            -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+            -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            -e REDIS_HOST="${{ secrets.REDIS_HOST }}" \
+            -e REDIS_PORT="${{ secrets.REDIS_PORT }}" \
+            -e REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
+            -e OAUTH_GOOGLE_CLIENT_ID="${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}" \
+            -e OAUTH_GOOGLE_CLIENT_SECRET="${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}" \
+            -e OAUTH_GITHUB_CLIENT_ID="${{ secrets.OAUTH_GITHUB_CLIENT_ID }}" \
+            -e OAUTH_GITHUB_CLIENT_SECRET="${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}" \
+            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            -e BASE_URL="${{ secrets.BASE_URL }}" \
+            -e OAUTH2_REDIRECT_URL="${{ secrets.OAUTH2_REDIRECT_URL }}" \
+            -e OAUTH2_ERROR_REDIRECT_URL="${{ secrets.OAUTH2_ERROR_REDIRECT_URL }}" \
+            -e OAUTH2_CONSENT_REQUIRED_URL="${{ secrets.OAUTH2_CONSENT_REQUIRED_URL }}" \
+            -e APP_FRONTEND_URL="${{ secrets.APP_FRONTEND_URL }}" \
+            -e CORS_ALLOWED_ORIGINS="${{ secrets.CORS_ALLOWED_ORIGINS }}" \
+            -e MAIL_HOST="${{ secrets.MAIL_HOST }}" \
+            -e MAIL_PORT="${{ secrets.MAIL_PORT }}" \
+            -e MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}" \
+            -e MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
+            -e LEGAL_TOS_VERSION="${{ secrets.LEGAL_TOS_VERSION }}" \
+            -e LEGAL_PP_VERSION="${{ secrets.LEGAL_PP_VERSION }}" \
             -e LOG_FILE_PATH=/var/log/mockops/application.log \
             -v /var/log/mockops:/var/log/mockops \
-            ${{ env.IMAGE_NAME }}
+            "$CLEAN_IMAGE_NAME"
 
       - name: Clean up unused images
         run: |
@@ -174,7 +195,7 @@ jobs:
           # 1. 릴리즈 노트 생성에 필요한 환경 변수 설정
           # ----------------------------------------------------
           # 마지막 태그를 찾아 커밋 비교의 기준점으로 사용
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
           if [ -z "$LAST_TAG" ]; then
               LAST_TAG=$(git rev-list --max-parents=0 HEAD)
               echo "No tags found. Starting from the initial commit: $LAST_TAG"
@@ -229,6 +250,6 @@ jobs:
           else
               # [skip ci] 태그를 사용하여 이 커밋이 다시 워크플로우를 트리거하지 않도록 방지
               git commit -m "docs(release): Add release notes for ${RELEASE_VERSION} [skip ci]"
-              git push 
+              git push origin HEAD:$GITHUB_REF_NAME
               echo "✅ Successfully updated and pushed ${HISTORY_FILE}."
           fi
