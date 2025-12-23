@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface DomainServerRepository extends JpaRepository<DomainServer, Long> {
+public interface DomainServerRepository extends JpaRepository<DomainServer, Long>, DomainServerRepositoryCustom {
 
     /**
      * 프로젝트 ID로 서버 목록 조회 (페이징)

@@ -89,6 +89,24 @@ public class DomainServerService {
     }
 
     /**
+     * 도메인 서버 검색 (이름, 상태)
+     * 권한: 프로젝트 멤버(VIEWER) 이상
+     */
+    public Page<DomainServerSimpleResponse> searchDomainServers(Long projectId, String name, ServerStatus status, Long currentUserId, Pageable pageable) {
+        // 권한 검증: 프로젝트 멤버만 조회 가능
+        projectMemberService.validateMemberPermission(projectId, currentUserId, MemberRole.VIEWER);
+
+        // QueryDSL을 사용한 동적 검색
+        Page<DomainServer> servers = domainServerRepository.searchDomainServers(projectId, name, status, pageable);
+
+        // 각 서버별로 미확인 알림 개수를 조회하여 DomainServerSimpleResponse로 변환
+        return servers.map(server -> {
+            Integer unreadCount = notificationRepository.countUnreadByDomainServerId(server.getId());
+            return DomainServerSimpleResponse.from(server, unreadCount);
+        });
+    }
+
+    /**
      * 서버 상세 조회 - DTO 반환
      */
     public DomainServerResponse getServerWithResponse(Long serverId, Long currentUserId) {

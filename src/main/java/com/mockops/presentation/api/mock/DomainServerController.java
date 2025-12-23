@@ -1,5 +1,6 @@
 package com.mockops.presentation.api.mock;
 
+import com.mockops.domain.mock.entity.ServerStatus;
 import com.mockops.domain.mock.service.DomainServerService;
 import com.mockops.global.common.UnifiedResponse;
 import com.mockops.presentation.api.mock.docs.DomainServerDocs;
@@ -131,5 +132,27 @@ public class DomainServerController implements DomainServerDocs {
         domainServerService.deleteServer(serverId, userId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 도메인 서버 검색
+     * GET /api/v1/projects/{projectId}/servers/search
+     */
+    @Override
+    @GetMapping("/projects/{projectId}/servers/search")
+    public ResponseEntity<UnifiedResponse<Page<DomainServerSimpleResponse>>> searchDomainServers(
+        @PathVariable Long projectId,
+        @RequestParam(required = false) String name,
+        @RequestParam(required = false) ServerStatus status,
+        @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+        @AuthenticationPrincipal Long userId
+    ) {
+        log.info("도메인 서버 검색 요청: projectId={}, name={}, status={}, userId={}", projectId, name, status, userId);
+
+        Page<DomainServerSimpleResponse> response = domainServerService.searchDomainServers(
+            projectId, name, status, userId, pageable
+        );
+
+        return ResponseEntity.ok(UnifiedResponse.success(response));
     }
 }

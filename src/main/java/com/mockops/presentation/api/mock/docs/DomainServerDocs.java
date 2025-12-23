@@ -1,5 +1,6 @@
 package com.mockops.presentation.api.mock.docs;
 
+import com.mockops.domain.mock.entity.ServerStatus;
 import com.mockops.global.common.UnifiedResponse;
 import com.mockops.presentation.api.mock.dto.domainserver.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -199,6 +200,46 @@ public interface DomainServerDocs {
     ResponseEntity<Void> deleteServer(
             @Parameter(description = "서버 ID", example = "1")
             @PathVariable Long serverId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "도메인 서버 검색",
+            description = "프로젝트 내 도메인 서버를 이름과 상태로 검색합니다. " +
+                    "검색 조건은 선택사항이며, 모든 조건을 생략하면 전체 서버 목록이 반환됩니다. " +
+                    "프로젝트 멤버(VIEWER) 이상만 검색할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "도메인 서버 검색 성공",
+                    content = @Content(schema = @Schema(implementation = DomainServerSimpleResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "프로젝트 접근 권한 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<UnifiedResponse<Page<DomainServerSimpleResponse>>> searchDomainServers(
+            @Parameter(description = "프로젝트 ID", example = "1")
+            @PathVariable Long projectId,
+            @Parameter(description = "도메인 서버 이름 (부분 일치)", example = "API Server")
+            String name,
+            @Parameter(description = "서버 상태 (MOCKING, PROXYING, DOWN)", example = "MOCKING")
+            ServerStatus status,
+            @Parameter(description = "페이지 정보 (page, size, sort)", example = "page=0&size=20&sort=createdAt,desc")
+            Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     );
 }
