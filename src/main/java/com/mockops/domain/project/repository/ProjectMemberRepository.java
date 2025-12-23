@@ -68,4 +68,21 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
             @Param("projectId") Long projectId,
             Pageable pageable
     );
+
+    /**
+     * 권한 순서로 정렬하여 처음부터 조회 (특정 사용자 제외)
+     * OWNER -> MANAGER -> DEVELOPER -> VIEWER 순서
+     * 같은 권한 내에서는 ID 오름차순
+     */
+    @Query("SELECT pm FROM ProjectMember pm WHERE pm.projectId = :projectId AND pm.userId <> :excludeUserId " +
+           "ORDER BY CASE pm.memberRole " +
+           "WHEN com.mockops.domain.project.role.MemberRole.OWNER THEN 0 " +
+           "WHEN com.mockops.domain.project.role.MemberRole.MANAGER THEN 1 " +
+           "WHEN com.mockops.domain.project.role.MemberRole.DEVELOPER THEN 2 " +
+           "WHEN com.mockops.domain.project.role.MemberRole.VIEWER THEN 3 END, pm.id ASC")
+    List<ProjectMember> findByProjectIdExcludingUserOrderByMemberRoleAscIdAsc(
+            @Param("projectId") Long projectId,
+            @Param("excludeUserId") Long excludeUserId,
+            Pageable pageable
+    );
 }

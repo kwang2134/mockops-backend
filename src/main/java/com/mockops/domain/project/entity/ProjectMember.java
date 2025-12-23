@@ -33,14 +33,22 @@ public class ProjectMember extends BaseEntity {
     @Column(nullable = false)
     private MemberRole memberRole;
 
+    @Column(nullable = false, length = 50)
+    private String projectNickname;
+
     @Builder
-    public ProjectMember(Long projectId, Long userId, MemberRole memberRole) {
+    public ProjectMember(Long projectId, Long userId, MemberRole memberRole, String projectNickname) {
         this.projectId = projectId;
         this.userId = userId;
         this.memberRole = memberRole;
+        this.projectNickname = projectNickname;
     }
 
     public void updateRole(MemberRole memberRole) {
         this.memberRole = memberRole;
+    }
+
+    public void updateProjectNickname(String projectNickname) {
+        this.projectNickname = projectNickname;
     }
 }
