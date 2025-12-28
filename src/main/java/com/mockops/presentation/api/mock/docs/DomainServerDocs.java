@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "도메인 서버", description = "도메인 서버 관리 API - Mock API를 제공하는 서버를 관리합니다")
 public interface DomainServerDocs {
@@ -240,6 +241,122 @@ public interface DomainServerDocs {
             ServerStatus status,
             @Parameter(description = "페이지 정보 (page, size, sort)", example = "page=0&size=20&sort=createdAt,desc")
             Pageable pageable,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "도메인 서버 담당 멤버 목록 조회",
+            description = "특정 도메인 서버를 담당하는 멤버 목록을 조회합니다. " +
+                    "Offset 기반 페이지네이션을 사용하며, 권한 순서(OWNER → MANAGER → DEVELOPER → VIEWER)로 정렬됩니다. " +
+                    "응답에는 로그인한 사용자의 도메인 서버 참여 정보도 포함됩니다. " +
+                    "프로젝트 멤버(VIEWER) 이상만 조회할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "담당 멤버 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = DomainServerMemberListResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "프로젝트 접근 권한 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "도메인 서버를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<UnifiedResponse<DomainServerMemberListResponse>> getDomainServerMembers(
+            @Parameter(description = "서버 ID", example = "1")
+            @PathVariable Long serverId,
+            @Parameter(description = "페이지 크기", example = "20")
+            @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "오프셋 (건너뛸 항목 수)", example = "0")
+            @RequestParam(required = false) Integer offset,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "도메인 서버 참여",
+            description = "로그인한 사용자가 도메인 서버의 담당 멤버로 참여합니다. " +
+                    "한 명의 멤버는 하나의 도메인 서버만 담당할 수 있습니다. " +
+                    "이미 다른 도메인 서버를 담당 중인 경우 참여할 수 없습니다. " +
+                    "DEVELOPER 이상의 권한을 가진 멤버만 참여할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "도메인 서버 참여 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "이미 다른 도메인 서버에 참여 중",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "도메인 서버 참여 권한 없음 (DEVELOPER 이상만 가능)",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "도메인 서버를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<Void> joinDomainServer(
+            @Parameter(description = "서버 ID", example = "1")
+            @PathVariable Long serverId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "도메인 서버 나가기",
+            description = "로그인한 사용자가 담당 중인 도메인 서버에서 나갑니다. " +
+                    "담당하지 않는 도메인 서버에서는 나갈 수 없습니다. " +
+                    "DEVELOPER 이상의 권한을 가진 멤버만 나갈 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "도메인 서버 나가기 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "해당 도메인 서버를 담당하고 있지 않음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "권한 없음 (DEVELOPER 이상만 가능)",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "도메인 서버를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<Void> leaveDomainServer(
+            @Parameter(description = "서버 ID", example = "1")
+            @PathVariable Long serverId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     );
 }

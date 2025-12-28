@@ -43,10 +43,13 @@ public class DomainServerRepositoryImpl implements DomainServerRepositoryCustom 
         }
 
         // 전체 카운트 조회
-        long total = queryFactory
-                .selectFrom(domainServer)
+        Long total = queryFactory
+                .select(domainServer.count())
+                .from(domainServer)
                 .where(builder)
-                .fetchCount();
+                .fetchOne();
+
+        long totalCount = (total != null) ? total : 0L;
 
         // 페이징 조회
         List<DomainServer> content = queryFactory
@@ -57,6 +60,6 @@ public class DomainServerRepositoryImpl implements DomainServerRepositoryCustom 
                 .orderBy(domainServer.createdAt.desc())
                 .fetch();
 
-        return new PageImpl<>(content, pageable, total);
+        return new PageImpl<>(content, pageable, totalCount);
     }
 }

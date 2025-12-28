@@ -155,4 +155,59 @@ public class DomainServerController implements DomainServerDocs {
 
         return ResponseEntity.ok(UnifiedResponse.success(response));
     }
+
+    /**
+     * 도메인 서버 담당 멤버 목록 조회 (Offset 기반 페이징)
+     * GET /api/v1/servers/{serverId}/members
+     */
+    @Override
+    @GetMapping("/servers/{serverId}/members")
+    public ResponseEntity<UnifiedResponse<DomainServerMemberListResponse>> getDomainServerMembers(
+        @PathVariable Long serverId,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(required = false) Integer offset,
+        @AuthenticationPrincipal Long userId
+    ) {
+        log.info("도메인 서버 담당 멤버 목록 조회: serverId={}, size={}, offset={}, userId={}", serverId, size, offset, userId);
+
+        DomainServerMemberListResponse response = domainServerService.getDomainServerMembers(
+            serverId, userId, offset, size
+        );
+
+        return ResponseEntity.ok(UnifiedResponse.success(response));
+    }
+
+    /**
+     * 도메인 서버 참여
+     * POST /api/v1/servers/{serverId}/members/me
+     */
+    @Override
+    @PostMapping("/servers/{serverId}/members/me")
+    public ResponseEntity<Void> joinDomainServer(
+        @PathVariable Long serverId,
+        @AuthenticationPrincipal Long userId
+    ) {
+        log.info("도메인 서버 참여 요청: serverId={}, userId={}", serverId, userId);
+
+        domainServerService.joinDomainServerAsMember(serverId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 도메인 서버 나가기
+     * DELETE /api/v1/servers/{serverId}/members/me
+     */
+    @Override
+    @DeleteMapping("/servers/{serverId}/members/me")
+    public ResponseEntity<Void> leaveDomainServer(
+        @PathVariable Long serverId,
+        @AuthenticationPrincipal Long userId
+    ) {
+        log.info("도메인 서버 나가기 요청: serverId={}, userId={}", serverId, userId);
+
+        domainServerService.leaveDomainServerAsMember(serverId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
 }

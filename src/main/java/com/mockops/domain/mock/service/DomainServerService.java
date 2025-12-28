@@ -5,21 +5,26 @@ import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.ServerStatus;
 import com.mockops.domain.mock.repository.DomainServerRepository;
 import com.mockops.domain.notification.repository.NotificationRepository;
+import com.mockops.domain.project.entity.ProjectMember;
+import com.mockops.domain.project.repository.ProjectMemberRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.project.service.ProjectMemberService;
+import com.mockops.domain.user.entity.User;
+import com.mockops.domain.user.service.UserService;
 import com.mockops.global.exception.ErrorCode;
-import com.mockops.presentation.api.mock.dto.domainserver.DomainServerCreateResponse;
-import com.mockops.presentation.api.mock.dto.domainserver.DomainServerResponse;
-import com.mockops.presentation.api.mock.dto.domainserver.DomainServerSimpleResponse;
-import com.mockops.presentation.api.mock.dto.domainserver.DomainServerUpdateResponse;
+import com.mockops.presentation.api.mock.dto.domainserver.*;
+import com.mockops.presentation.api.project.dto.project.ProjectMemberResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 도메인 서버 관리 서비스
@@ -32,6 +37,8 @@ public class DomainServerService {
 
     private final DomainServerRepository domainServerRepository;
     private final ProjectMemberService projectMemberService;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final UserService userService;
     private final HealthCheckService healthCheckService;
     private final NotificationRepository notificationRepository;
 
@@ -232,5 +239,100 @@ public class DomainServerService {
         DomainServer server = getDomainServerById(serverId);
         server.updateStatus(newStatus);
         server.updateLastCheckedAt();
+    }
+
+    /**
+     * 도메인 서버 담당 멤버 목록 조회 (Offset 기반 페이징)
+     * 권한: 프로젝트 멤버(VIEWER) 이상
+     */
+    public DomainServerMemberListResponse getDomainServerMembers(Long serverId, Long currentUserId, Integer offset, int size) {
+        DomainServer server = getDomainServerById(serverId);
+
+        // 권한 검증: 프로젝트 멤버만 조회 가능
+        projectMemberService.validateMemberPermission(server.getProjectId(), currentUserId, MemberRole.VIEWER);
+
+        // 로그인 사용자의 멤버 정보 조회 (담당 도메인 서버 ID 확인)
+        ProjectMember currentMember = projectMemberService.getProjectMemberByProjectIdAndUserId(server.getProjectId(), currentUserId);
+        Long myDomainServerId = currentMember.getDomainServerId();
+
+        // offset이 null이면 0으로 처리
+        int actualOffset = (offset == null) ? 0 : offset;
+
+        // 데이터베이스 레벨에서 offset 기반 페이징 처리
+        Pageable pageable = PageRequest.of(actualOffset / size, size + 1);
+        List<ProjectMember> members = projectMemberRepository.findByDomainServerIdOrderByMemberRoleAscIdAsc(serverId, pageable);
+
+        // hasNext 계산
+        boolean hasNext = members.size() > size;
+        List<ProjectMember> pagedMembers = hasNext
+                ? members.subList(0, size)
+                : members;
+
+        // DTO 변환
+        List<ProjectMemberResponse> memberResponses = pagedMembers.stream()
+                .map(member -> {
+                    User user = userService.getUserById(member.getUserId());
+                    return ProjectMemberResponse.from(member, user.getNickname());
+                })
+                .collect(Collectors.toList());
+
+        // nextOffset 계산
+        Integer nextOffset = hasNext ? actualOffset + size : null;
+
+        return DomainServerMemberListResponse.of(memberResponses, hasNext, nextOffset, myDomainServerId, serverId);
+    }
+
+    /**
+     * 도메인 서버 참여
+     * 권한: DEVELOPER 이상
+     */
+    @Transactional
+    public void joinDomainServerAsMember(Long serverId, Long currentUserId) {
+        DomainServer server = getDomainServerById(serverId);
+
+        // 권한 검증: DEVELOPER 이상만 참여 가능
+        projectMemberService.validateMemberPermission(server.getProjectId(), currentUserId, MemberRole.DEVELOPER);
+
+        // 로그인 사용자의 멤버 정보 조회
+        ProjectMember member = projectMemberService.getProjectMemberByProjectIdAndUserId(server.getProjectId(), currentUserId);
+
+        // 이미 다른 도메인 서버에 참여 중인지 확인
+        if (member.getDomainServerId() != null) {
+            throw ErrorCode.PERMISSION_DENIED.serviceException(
+                    "이미 다른 도메인 서버에 참여 중입니다. currentServerId=" + member.getDomainServerId()
+            );
+        }
+
+        // 도메인 서버 참여 (더티 체킹으로 자동 UPDATE)
+        member.updateDomainServer(serverId);
+
+        log.info("도메인 서버 참여 완료: serverId={}, userId={}, memberId={}", serverId, currentUserId, member.getId());
+    }
+
+    /**
+     * 도메인 서버 나가기
+     * 권한: DEVELOPER 이상
+     */
+    @Transactional
+    public void leaveDomainServerAsMember(Long serverId, Long currentUserId) {
+        DomainServer server = getDomainServerById(serverId);
+
+        // 권한 검증: DEVELOPER 이상만 나갈 수 있음
+        projectMemberService.validateMemberPermission(server.getProjectId(), currentUserId, MemberRole.DEVELOPER);
+
+        // 로그인 사용자의 멤버 정보 조회
+        ProjectMember member = projectMemberService.getProjectMemberByProjectIdAndUserId(server.getProjectId(), currentUserId);
+
+        // 해당 도메인 서버를 담당하고 있는지 확인
+        if (member.getDomainServerId() == null || !member.getDomainServerId().equals(serverId)) {
+            throw ErrorCode.PERMISSION_DENIED.serviceException(
+                    "해당 도메인 서버에 참여하고 있지 않습니다. serverId=" + serverId
+            );
+        }
+
+        // 도메인 서버 나가기 (더티 체킹으로 자동 UPDATE)
+        member.clearDomainServer();
+
+        log.info("도메인 서버 나가기 완료: serverId={}, userId={}, memberId={}", serverId, currentUserId, member.getId());
     }
 }

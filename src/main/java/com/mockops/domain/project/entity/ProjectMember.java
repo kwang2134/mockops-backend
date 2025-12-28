@@ -36,12 +36,16 @@ public class ProjectMember extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String projectNickname;
 
+    @Column(name = "domain_server_id")
+    private Long domainServerId;
+
     @Builder
     public ProjectMember(Long projectId, Long userId, MemberRole memberRole, String projectNickname) {
         this.projectId = projectId;
         this.userId = userId;
         this.memberRole = memberRole;
         this.projectNickname = projectNickname;
+        this.domainServerId = null;
     }
 
     public void updateRole(MemberRole memberRole) {
@@ -50,5 +54,13 @@ public class ProjectMember extends BaseEntity {
 
     public void updateProjectNickname(String projectNickname) {
         this.projectNickname = projectNickname;
+    }
+
+    public void updateDomainServer(Long domainServerId) {
+        this.domainServerId = domainServerId;
+    }
+
+    public void clearDomainServer() {
+        this.domainServerId = null;
     }
 }
