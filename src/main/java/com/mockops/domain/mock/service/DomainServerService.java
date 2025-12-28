@@ -14,6 +14,7 @@ import com.mockops.domain.user.service.UserService;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.presentation.api.mock.dto.domainserver.*;
 import com.mockops.presentation.api.project.dto.project.ProjectMemberResponse;
+import com.mockops.presentation.api.webhook.dto.DeploymentRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -146,7 +147,7 @@ public class DomainServerService {
 
         // slug 중복 확인 (projectId와 slug의 복합 유니크 제약)
         if (domainServerRepository.existsByProjectIdAndSlug(projectId, slug)) {
-            throw ErrorCode.DOMAIN_SERVER_DUPLICATED.serviceException(
+            throw ErrorCode.DOMAIN_SERVER_DUPLICATED.domainException(
                 "이미 존재하는 서버 slug입니다. projectId=" + projectId + ", slug=" + slug
             );
         }
@@ -298,7 +299,7 @@ public class DomainServerService {
 
         // 이미 다른 도메인 서버에 참여 중인지 확인
         if (member.getDomainServerId() != null) {
-            throw ErrorCode.PERMISSION_DENIED.serviceException(
+            throw ErrorCode.PERMISSION_DENIED.domainException(
                     "이미 다른 도메인 서버에 참여 중입니다. currentServerId=" + member.getDomainServerId()
             );
         }
@@ -325,7 +326,7 @@ public class DomainServerService {
 
         // 해당 도메인 서버를 담당하고 있는지 확인
         if (member.getDomainServerId() == null || !member.getDomainServerId().equals(serverId)) {
-            throw ErrorCode.PERMISSION_DENIED.serviceException(
+            throw ErrorCode.PERMISSION_DENIED.domainException(
                     "해당 도메인 서버에 참여하고 있지 않습니다. serverId=" + serverId
             );
         }
@@ -334,5 +335,28 @@ public class DomainServerService {
         member.clearDomainServer();
 
         log.info("도메인 서버 나가기 완료: serverId={}, userId={}, memberId={}", serverId, currentUserId, member.getId());
+    }
+
+    /**
+     * Webhook Deploy 요청 수락 처리
+     * 서버 상태 PENDING 변경
+     *
+     * @param projectId 프로젝트 id
+     * @param request 요청
+     */
+    @Transactional
+    public void prepareForDeployment(Long projectId, DeploymentRequest request) {
+        DomainServer domainServer = domainServerRepository.findByProjectIdAndName(projectId, request.domainServerName())
+                .orElseThrow(() -> ErrorCode.DOMAIN_SERVER_NOT_FOUND.domainException("해당 도메인 서버가 존재하지 않습니다. serverName=" + request.domainServerName()));
+
+        domainServer.updateServerInfo(
+                domainServer.getName(),
+                request.healthCheckUrl(),
+                request.healthCheckInterval() != null ? request.healthCheckInterval() : "10m",
+                ServerStatus.PENDING,
+                true
+        );
+
+        log.info("서버 상태 PENDING 변경 완료: serverId={}", domainServer.getId());
     }
 }

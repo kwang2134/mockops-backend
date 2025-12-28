@@ -10,6 +10,8 @@ import com.mockops.domain.mock.repository.DomainServerRepository;
 import com.mockops.domain.notification.entity.NotificationType;
 import com.mockops.domain.notification.service.NotificationService;
 import com.mockops.domain.notification.service.SlackNotificationService;
+import com.mockops.domain.webhook.model.DeployHealthCheckJob;
+import com.mockops.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -19,9 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 도메인 서버 헬스 체크 서비스
@@ -477,4 +477,145 @@ public class HealthCheckService {
             log.error("서버 상태 변경 알림 생성 실패: serverId={}, error={}", server.getId(), e.getMessage());
         }
     }
+
+    // 배포 이벤트 웹훅으로 요청 받은 헬스체크 수행
+    @Transactional
+    public List<DeployHealthCheckJob> deploymentHealthcheck(Set<DeployHealthCheckJob> jobs) {
+        List<DeployHealthCheckJob> retryJobs = new ArrayList<>();
+
+        for (DeployHealthCheckJob job : jobs) {
+            // 헬스 체크 로직 수행
+            DeployHealthCheckJob retryJob = processDeployHealthcheck(job);
+
+            // 실패한 경우 재등록을 위한 객체
+            if (retryJob != null) {
+                retryJobs.add(retryJob);
+            }
+        }
+
+        return retryJobs;
+    }
+
+    private DeployHealthCheckJob processDeployHealthcheck(DeployHealthCheckJob job) {
+
+        log.debug("배포 이벤트 헬스 체크 시작: serverId={}, url={}, failureCount={}", job.serverId(), job.healthcheckUrl(),
+                job.failureCount());
+
+        // WebClient HTTP GET 요청
+        HealthCheckResult result = checkHealth(job.healthcheckUrl());
+
+        // 결과에 따라 처리 수행
+        return updateDeployJobStatus(job, result);
+    }
+
+    private DeployHealthCheckJob updateDeployJobStatus(DeployHealthCheckJob job, HealthCheckResult result) {
+
+        if (result.isHealthy()) {
+            // 헬스 체크 성공 시
+            handleDeployCheckSuccess(job);
+            return null;
+        } else {
+            // 헬스 체크 실패 시
+            return handleDeployCheckFail(job);
+        }
+    }
+
+    private void handleDeployCheckSuccess(DeployHealthCheckJob job) {
+        // 배포 성공
+        DomainServer domainServer = domainServerRepository.findById(job.serverId())
+                .orElseThrow(() -> ErrorCode.DOMAIN_SERVER_NOT_FOUND
+                        .domainException("도메인 서버가 존재하지 않습니다. serverId=" + job.serverId()));
+
+        domainServer.updateStatus(ServerStatus.DEPLOYED);
+        log.info("도메인 서버 배포 성공: serverId={}", domainServer.getId());
+
+        // 정식 헬스 체크 job 등록
+        healthCheckCachePort.addHealthCheckJob(domainServer.getHealthCheckInterval(), domainServer.getId(),
+                domainServer.getHealthCheckUrl());
+
+        // Slack 알림 발송
+        slackNotificationService.sendDeployResultNotification(domainServer, ServerStatus.DEPLOYED);
+
+        // 서비스 알림 발송
+        createServerDeploySuccessNotification(domainServer);
+
+    }
+
+    private void createServerDeploySuccessNotification(DomainServer server) {
+        try {
+            // metadata 생성
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("serverId", server.getId());
+            metadata.put("serverName", server.getName());
+            metadata.put("projectId", server.getProjectId());
+            String metadataJson = objectMapper.writeValueAsString(metadata);
+
+            // 알림 메시지 생성
+            String message = String.format("서버 '%s' 배포에 성공했습니다.", server.getName());
+
+            // 알림 생성
+            notificationService.createNotification(
+                    null, // recipientUserId (null, 서버 귀속)
+                    server.getId(), // domainServerId
+                    NotificationType.SERVER_STATUS_CHANGED,
+                    "서버 배포 성공",
+                    message,
+                    metadataJson);
+            log.info("서버 배포 성공 알림 생성: serverId={}", server.getId());
+        } catch (Exception e) {
+            log.error("서버 배포 성공 알림 생성 실패: serverId={}, error={}", server.getId(), e.getMessage());
+        }
+    }
+
+    private void createServerDeployFailureNotification(DomainServer server) {
+        try {
+            // metadata 생성
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("serverId", server.getId());
+            metadata.put("serverName", server.getName());
+            metadata.put("projectId", server.getProjectId());
+            metadata.put("reason", "헬스 체크 5회 실패");
+            String metadataJson = objectMapper.writeValueAsString(metadata);
+
+            // 알림 메시지 생성
+            String message = String.format("서버 '%s' 배포에 실패했습니다. (헬스 체크 실패)", server.getName());
+
+            // 알림 생성
+            notificationService.createNotification(
+                    null, // recipientUserId (null, 서버 귀속)
+                    server.getId(), // domainServerId
+                    NotificationType.SERVER_STATUS_CHANGED, // 또는 DEPLOY_FAILURE 타입이 있다면 사용
+                    "서버 배포 실패",
+                    message,
+                    metadataJson);
+            log.info("서버 배포 실패 알림 생성: serverId={}", server.getId());
+        } catch (Exception e) {
+            log.error("서버 배포 실패 알림 생성 실패: serverId={}, error={}", server.getId(), e.getMessage());
+        }
+    }
+
+    private DeployHealthCheckJob handleDeployCheckFail(DeployHealthCheckJob job) {
+        // 헬스 체크 실패
+        if (job.failureCount() >= 5) {
+            DomainServer domainServer = domainServerRepository.findById(job.serverId())
+                    .orElseThrow(() -> ErrorCode.DOMAIN_SERVER_NOT_FOUND
+                            .domainException("도메인 서버가 존재하지 않습니다. serverId=" + job.serverId()));
+
+            // 1. 서버 상태 업데이트 (ERROR)
+            domainServer.updateStatus(ServerStatus.ERROR);
+            log.error("도메인 서버 배포 실패 (헬스 체크 5회 초과): serverId={}", domainServer.getId());
+
+            // 2. 실패 알림 발송 (Slack)
+            slackNotificationService.sendDeployResultNotification(domainServer, ServerStatus.ERROR);
+
+            // 3. 실패 알림 발송 (Service)
+            createServerDeployFailureNotification(domainServer);
+
+            return null;
+        } else {
+            // 재시도 등록용 job 생성
+            return new DeployHealthCheckJob(job.serverId(), job.healthcheckUrl(), job.failureCount() + 1);
+        }
+    }
+
 }
