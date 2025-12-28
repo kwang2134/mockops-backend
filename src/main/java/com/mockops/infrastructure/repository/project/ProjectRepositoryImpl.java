@@ -3,6 +3,7 @@ package com.mockops.infrastructure.repository.project;
 import com.mockops.domain.project.entity.Project;
 import com.mockops.domain.project.entity.QProject;
 import com.mockops.domain.project.repository.ProjectRepositoryCustom;
+import com.mockops.domain.user.entity.QUser;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +24,9 @@ public class ProjectRepositoryImpl implements ProjectRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Project> searchProjects(String name, Long ownerId, Pageable pageable) {
+    public Page<Project> searchProjects(String name, String ownerNickname, Pageable pageable) {
         QProject project = QProject.project;
+        QUser user = QUser.user;
 
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -34,25 +36,30 @@ public class ProjectRepositoryImpl implements ProjectRepositoryCustom {
         }
 
         // 오너 ID 검색 (정확히 일치)
-        if (ownerId != null) {
-            builder.and(project.ownerId.eq(ownerId));
+        if (ownerNickname != null && !ownerNickname.isBlank()) {
+            builder.and(user.nickname.containsIgnoreCase(ownerNickname));
         }
 
         // 전체 카운트 조회
-        long total = queryFactory
-                .selectFrom(project)
+        Long total = queryFactory
+                .select(project.count())
+                .from(project)
+                .leftJoin(user).on(user.id.eq(project.ownerId))
                 .where(builder)
-                .fetchCount();
+                .fetchOne();
+
+        long totalCount = (total != null) ? total : 0L;
 
         // 페이징 조회
         List<Project> content = queryFactory
                 .selectFrom(project)
+                .leftJoin(user).on(user.id.eq(project.ownerId))
                 .where(builder)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(project.createdAt.desc())
                 .fetch();
 
-        return new PageImpl<>(content, pageable, total);
+        return new PageImpl<>(content, pageable, totalCount);
     }
 }

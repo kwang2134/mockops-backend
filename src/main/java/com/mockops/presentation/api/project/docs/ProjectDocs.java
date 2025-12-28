@@ -199,8 +199,8 @@ public interface ProjectDocs {
     ResponseEntity<UnifiedResponse<ProjectPageResponse>> searchProjects(
             @Parameter(description = "프로젝트 제목 (부분 일치)", example = "MockOps")
             String name,
-            @Parameter(description = "프로젝트 오너 ID", example = "1")
-            Long ownerId,
+            @Parameter(description = "프로젝트 오너 Nickname", example = "kim")
+            String ownerNickname,
             @Parameter(description = "페이지 정보 (page, size, sort)", example = "page=0&size=10&sort=createdAt,desc")
             Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
