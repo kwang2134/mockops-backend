@@ -243,3 +243,9 @@ domain/{domain-name}/
 - [핵심 기술 스펙: Redis 복구 전략](docs/04_Tech_And_Infra/03_Core_Tech_Specs_Redis_Recovery_Strategy.md)
 - [핵심 기술 스펙: WebHook](docs/04_Tech_And_Infra/03_Core_Tech_Specs_Webhook.md)
 - [예외 처리 정책](docs/04_Tech_And_Infra/04_Exception_Handling_Policy.md)
+
+## 릴리즈 노트
+[릴리즈 노트](RELEASE_NOTES.md)
+
+### 변경사항 기록
+[mockops_v1.0.1](docs/dev/CHANGELOG_v1.0.1.md)
