@@ -7,6 +7,7 @@ import com.mockops.presentation.api.project.dto.MemberInviteAcceptRequest;
 import com.mockops.presentation.api.project.dto.project.ProjectMemberResponse;
 import com.mockops.presentation.api.project.dto.projectmember.MemberListResponse;
 import com.mockops.presentation.api.project.dto.projectmember.MemberRoleUpdateRequest;
+import com.mockops.presentation.api.project.dto.projectmember.UpdateProjectNicknameRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -116,5 +117,45 @@ public class ProjectMemberController implements ProjectMemberDocs {
         projectMemberService.removeProjectMember(memberId, userId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 내 프로젝트 멤버 정보 조회
+     * GET /api/v1/projects/{projectId}/members/me
+     */
+    @Override
+    @GetMapping("/me")
+    public ResponseEntity<UnifiedResponse<ProjectMemberResponse>> getMyMemberInfo(
+            @PathVariable Long projectId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("내 프로젝트 멤버 정보 조회: projectId={}, userId={}", projectId, userId);
+
+        ProjectMemberResponse response = projectMemberService.getMyMemberInfo(projectId, userId);
+
+        return ResponseEntity.ok(UnifiedResponse.success(response));
+    }
+
+    /**
+     * 내 프로젝트 닉네임 수정
+     * PATCH /api/v1/projects/{projectId}/members/me/nickname
+     */
+    @Override
+    @PatchMapping("/me/nickname")
+    public ResponseEntity<UnifiedResponse<ProjectMemberResponse>> updateMyProjectNickname(
+            @PathVariable Long projectId,
+            @Valid @RequestBody UpdateProjectNicknameRequest request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("내 프로젝트 닉네임 수정 요청: projectId={}, userId={}, newNickname={}",
+                projectId, userId, request.projectNickname());
+
+        ProjectMemberResponse response = projectMemberService.updateMyProjectNickname(
+                projectId,
+                userId,
+                request.projectNickname()
+        );
+
+        return ResponseEntity.ok(UnifiedResponse.success(response));
     }
 }

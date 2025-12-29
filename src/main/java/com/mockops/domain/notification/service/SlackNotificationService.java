@@ -64,6 +64,30 @@ public class SlackNotificationService {
     }
 
     /**
+     * 서버 배포 성공 알림 전송
+     *
+     * @param server 도메인 서버
+     */
+    public void sendDeployResultNotification(DomainServer server, ServerStatus status) {
+        // 프로젝트 조회
+        Project project = projectRepository.findById(server.getProjectId()).orElse(null);
+
+        if (project == null) {
+            log.warn("프로젝트를 찾을 수 없어 Slack 알림을 전송하지 않음: projectId={}", server.getProjectId());
+            return;
+        }
+
+        // Slack Webhook URL 확인
+        if (project.getSlackWebhookUrl() == null || project.getSlackWebhookUrl().isEmpty()) {
+            log.debug("Slack Webhook URL이 설정되지 않아 알림을 전송하지 않음: projectId={}", project.getId());
+            return;
+        }
+
+        // Slack 메시지 전송
+        sendSlackMessage(project, server, ServerStatus.PENDING, status);
+    }
+
+    /**
      * 알림 대상 상태 변경인지 확인
      */
     private boolean shouldNotify(ServerStatus previousStatus, ServerStatus newStatus) {
