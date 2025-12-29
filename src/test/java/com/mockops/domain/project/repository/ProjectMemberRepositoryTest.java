@@ -34,6 +34,7 @@ class ProjectMemberRepositoryTest {
                 .projectId(1L)
                 .userId(2L)
                 .memberRole(MemberRole.DEVELOPER)
+                .projectNickname("test")
                 .build();
 
         // when
@@ -55,11 +56,13 @@ class ProjectMemberRepositoryTest {
                 .projectId(1L)
                 .userId(2L)
                 .memberRole(MemberRole.OWNER)
+                .projectNickname("test")
                 .build();
         ProjectMember member2 = ProjectMember.builder()
                 .projectId(1L)
                 .userId(3L)
                 .memberRole(MemberRole.DEVELOPER)
+                .projectNickname("test")
                 .build();
         projectMemberRepository.save(member1);
         projectMemberRepository.save(member2);
@@ -81,11 +84,13 @@ class ProjectMemberRepositoryTest {
                 .projectId(1L)
                 .userId(2L)
                 .memberRole(MemberRole.DEVELOPER)
+                .projectNickname("test")
                 .build();
         ProjectMember member2 = ProjectMember.builder()
                 .projectId(3L)
                 .userId(2L)
                 .memberRole(MemberRole.VIEWER)
+                .projectNickname("test")
                 .build();
         projectMemberRepository.save(member1);
         projectMemberRepository.save(member2);
@@ -107,6 +112,7 @@ class ProjectMemberRepositoryTest {
                 .projectId(1L)
                 .userId(2L)
                 .memberRole(MemberRole.DEVELOPER)
+                .projectNickname("test")
                 .build();
         projectMemberRepository.save(projectMember);
 
@@ -126,6 +132,7 @@ class ProjectMemberRepositoryTest {
                 .projectId(1L)
                 .userId(2L)
                 .memberRole(MemberRole.DEVELOPER)
+                .projectNickname("test")
                 .build();
         projectMemberRepository.save(projectMember);
 
@@ -146,6 +153,7 @@ class ProjectMemberRepositoryTest {
                 .projectId(1L)
                 .userId(2L)
                 .memberRole(MemberRole.OWNER)
+                .projectNickname("test")
                 .build();
         projectMemberRepository.save(projectMember);
 
@@ -170,6 +178,7 @@ class ProjectMemberRepositoryTest {
                 .projectId(1L)
                 .userId(2L)
                 .memberRole(MemberRole.VIEWER)
+                .projectNickname("test")
                 .build();
         ProjectMember savedMember = projectMemberRepository.save(projectMember);
 

@@ -78,17 +78,30 @@ public class ProjectMemberService {
     }
 
     /**
-     * Offset 기반 페이징으로 프로젝트 멤버 조회
+     * 내 프로젝트 멤버 정보 조회
+     * 권한: PROJECT_MEMBER 이상
+     */
+    public ProjectMemberResponse getMyMemberInfo(Long projectId, Long currentUserId) {
+        // 권한 검증: 프로젝트 멤버 여부 확인
+        ProjectMember member = getProjectMemberByProjectIdAndUserId(projectId, currentUserId);
+
+        User user = userService.getUserById(currentUserId);
+        return ProjectMemberResponse.from(member, user.getNickname());
+    }
+
+    /**
+     * Offset 기반 페이징으로 프로젝트 멤버 조회 (로그인 사용자 제외)
      * 권한 순서로 정렬: OWNER -> MANAGER -> DEVELOPER -> VIEWER
      * 같은 권한 내에서는 ID 오름차순
      */
-    public List<ProjectMember> getProjectMembersByProjectIdWithOffset(Long projectId, int offset, int size) {
+    public List<ProjectMember> getProjectMembersByProjectIdWithOffsetExcludingUser(Long projectId, Long excludeUserId, int offset, int size) {
         Pageable pageable = PageRequest.of(offset / size, size + 1); // hasNext 판단을 위해 1개 더 조회
-        return projectMemberRepository.findByProjectIdOrderByMemberRoleAscIdAsc(projectId, pageable);
+        return projectMemberRepository.findByProjectIdExcludingUserOrderByMemberRoleAscIdAsc(projectId, excludeUserId, pageable);
     }
 
     /**
      * 프로젝트 멤버 목록 조회 (Offset 기반 페이징) - Response DTO 반환
+     * 로그인한 사용자는 목록에서 제외됨
      * 권한: PROJECT_MEMBER 이상
      */
     public MemberListResponse getMembersWithPagination(Long projectId, Long currentUserId, Integer offset, int size) {
@@ -98,8 +111,8 @@ public class ProjectMemberService {
         // offset이 null이면 0으로 처리
         int actualOffset = (offset == null) ? 0 : offset;
 
-        // 데이터베이스 레벨에서 offset 기반 페이징 처리
-        List<ProjectMember> members = getProjectMembersByProjectIdWithOffset(projectId, actualOffset, size);
+        // 데이터베이스 레벨에서 offset 기반 페이징 처리 (로그인 사용자 제외)
+        List<ProjectMember> members = getProjectMembersByProjectIdWithOffsetExcludingUser(projectId, currentUserId, actualOffset, size);
 
         // hasNext 계산
         boolean hasNext = members.size() > size;
@@ -166,10 +179,15 @@ public class ProjectMemberService {
             );
         }
 
+        // 사용자의 기본 닉네임을 프로젝트 닉네임 기본값으로 설정
+        User user = userService.getUserById(userId);
+        String defaultProjectNickname = user.getNickname();
+
         ProjectMember projectMember = ProjectMember.builder()
                 .projectId(projectId)
                 .userId(userId)
                 .memberRole(memberRole)
+                .projectNickname(defaultProjectNickname)
                 .build();
 
         return projectMemberRepository.save(projectMember);
@@ -205,6 +223,22 @@ public class ProjectMemberService {
 
     public boolean isProjectMember(Long projectId, Long userId, MemberRole memberRole) {
         return projectMemberRepository.existsByProjectIdAndUserIdAndMemberRole(projectId, userId, memberRole);
+    }
+
+    /**
+     * 내 프로젝트 닉네임 수정
+     * 권한: PROJECT_MEMBER (본인만 수정 가능)
+     */
+    @Transactional
+    public ProjectMemberResponse updateMyProjectNickname(Long projectId, Long currentUserId, String newProjectNickname) {
+        // 프로젝트 멤버 조회 및 권한 검증
+        ProjectMember member = getProjectMemberByProjectIdAndUserId(projectId, currentUserId);
+
+        // 프로젝트 닉네임 수정
+        member.updateProjectNickname(newProjectNickname);
+
+        User user = userService.getUserById(currentUserId);
+        return ProjectMemberResponse.from(member, user.getNickname());
     }
 
     /**

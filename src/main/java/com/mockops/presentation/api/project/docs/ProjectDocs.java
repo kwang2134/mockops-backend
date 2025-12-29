@@ -177,4 +177,32 @@ public interface ProjectDocs {
             @PathVariable Long projectId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     );
+
+    @Operation(
+            summary = "프로젝트 검색",
+            description = "프로젝트 제목과 오너 ID로 프로젝트를 검색합니다. " +
+                    "검색 조건은 선택사항이며, 모든 조건을 생략하면 전체 프로젝트 목록이 반환됩니다. " +
+                    "인증된 사용자만 검색할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "프로젝트 검색 성공",
+                    content = @Content(schema = @Schema(implementation = ProjectPageResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<UnifiedResponse<ProjectPageResponse>> searchProjects(
+            @Parameter(description = "프로젝트 제목 (부분 일치)", example = "MockOps")
+            String name,
+            @Parameter(description = "프로젝트 오너 Nickname", example = "kim")
+            String ownerNickname,
+            @Parameter(description = "페이지 정보 (page, size, sort)", example = "page=0&size=10&sort=createdAt,desc")
+            Pageable pageable,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
 }

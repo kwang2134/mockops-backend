@@ -7,6 +7,7 @@ public record ProjectMemberResponse(
         Long id,
         Long userId,
         String nickname,
+        String projectNickname,
         MemberRole memberRole
 ) {
     public static ProjectMemberResponse from(ProjectMember member, String nickname) {
@@ -14,6 +15,7 @@ public record ProjectMemberResponse(
                 member.getId(),
                 member.getUserId(),
                 nickname,
+                member.getProjectNickname(),
                 member.getMemberRole()
         );
     }

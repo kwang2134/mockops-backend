@@ -5,6 +5,7 @@ import com.mockops.presentation.api.project.dto.MemberInviteAcceptRequest;
 import com.mockops.presentation.api.project.dto.project.ProjectMemberResponse;
 import com.mockops.presentation.api.project.dto.projectmember.MemberListResponse;
 import com.mockops.presentation.api.project.dto.projectmember.MemberRoleUpdateRequest;
+import com.mockops.presentation.api.project.dto.projectmember.UpdateProjectNicknameRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -177,6 +178,78 @@ public interface ProjectMemberDocs {
             @PathVariable Long projectId,
             @Parameter(description = "멤버 ID", example = "10")
             @PathVariable Long memberId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "내 프로젝트 멤버 정보 조회",
+            description = "로그인한 사용자의 프로젝트 멤버 정보를 조회합니다. " +
+                    "프로젝트 내 닉네임, 역할 등을 확인할 수 있으며, 프로젝트 멤버만 조회할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "내 멤버 정보 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ProjectMemberResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "프로젝트 접근 권한 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<UnifiedResponse<ProjectMemberResponse>> getMyMemberInfo(
+            @Parameter(description = "프로젝트 ID", example = "1")
+            @PathVariable Long projectId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "내 프로젝트 닉네임 수정",
+            description = "로그인한 사용자의 프로젝트 내 닉네임을 수정합니다. " +
+                    "본인의 닉네임만 수정할 수 있으며, 프로젝트 멤버만 수정할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "프로젝트 닉네임 수정 성공",
+                    content = @Content(schema = @Schema(implementation = ProjectMemberResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "유효하지 않은 닉네임 (길이 제한 등)",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "프로젝트 접근 권한 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = UnifiedResponse.class))
+            )
+    })
+    ResponseEntity<UnifiedResponse<ProjectMemberResponse>> updateMyProjectNickname(
+            @Parameter(description = "프로젝트 ID", example = "1")
+            @PathVariable Long projectId,
+            @Valid @RequestBody UpdateProjectNicknameRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
     );
 }
