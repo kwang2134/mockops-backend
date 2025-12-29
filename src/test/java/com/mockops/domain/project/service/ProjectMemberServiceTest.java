@@ -3,6 +3,8 @@ package com.mockops.domain.project.service;
 import com.mockops.domain.project.entity.ProjectMember;
 import com.mockops.domain.project.repository.ProjectMemberRepository;
 import com.mockops.domain.project.role.MemberRole;
+import com.mockops.domain.user.entity.User;
+import com.mockops.domain.user.role.Role;
 import com.mockops.global.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -141,6 +143,12 @@ class ProjectMemberServiceTest {
         Long userId = 2L;
         MemberRole memberRole = MemberRole.DEVELOPER;
 
+        User user = User.builder()
+                .nickname("user")
+                .email("email@naver.com")
+                .role(Role.USER)
+                .build();
+
         ProjectMember member = ProjectMember.builder()
                 .projectId(projectId)
                 .userId(userId)
@@ -149,6 +157,7 @@ class ProjectMemberServiceTest {
 
         given(projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)).willReturn(false);
         given(projectMemberRepository.save(any(ProjectMember.class))).willReturn(member);
+        given(userService.getUserById(any(Long.class))).willReturn(user);
 
         // when
         ProjectMember addedMember = projectMemberService.addProjectMember(projectId, userId, memberRole);
