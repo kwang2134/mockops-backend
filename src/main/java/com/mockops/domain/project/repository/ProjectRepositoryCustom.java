@@ -4,6 +4,8 @@ import com.mockops.domain.project.entity.Project;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 /**
  * 프로젝트 검색을 위한 Custom Repository 인터페이스
  */
@@ -17,5 +19,5 @@ public interface ProjectRepositoryCustom {
      * @param pageable 페이징 정보
      * @return 검색된 프로젝트 페이지
      */
-    Page<Project> searchProjects(String name, String ownerNickname, Pageable pageable);
+    Page<Project> searchProjects(List<Long> projectIds, String name, String ownerNickname, Pageable pageable);
 }

@@ -133,7 +133,7 @@ public class ProjectController implements ProjectDocs {
     ) {
         log.info("프로젝트 검색 요청: name={}, ownerNickname={}, userId={}", name, ownerNickname, userId);
 
-        ProjectPageResponse response = projectService.searchProjects(name, ownerNickname, pageable);
+        ProjectPageResponse response = projectService.searchProjects(userId, name, ownerNickname, pageable);
         return ResponseEntity.ok(UnifiedResponse.success(response));
     }
 }
