@@ -1,8 +1,8 @@
 package com.mockops.domain.healthcheck.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mockops.domain.healthcheck.infrastructure.HealthCheckCachePort;
-import com.mockops.domain.healthcheck.infrastructure.HealthCheckFailurePort;
+import com.mockops.domain.healthcheck.port.HealthCheckCachePort;
+import com.mockops.domain.healthcheck.port.HealthCheckFailurePort;
 import com.mockops.domain.healthcheck.util.HealthCheckJobParser;
 import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.ServerStatus;

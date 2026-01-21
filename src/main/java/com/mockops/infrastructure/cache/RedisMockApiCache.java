@@ -2,7 +2,7 @@ package com.mockops.infrastructure.cache;
 
 import com.mockops.domain.mock.dto.MockCacheDto;
 import com.mockops.domain.mock.entity.HttpMethod;
-import com.mockops.domain.mock.infrastructure.MockApiCachePort;
+import com.mockops.domain.mock.port.MockApiCachePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

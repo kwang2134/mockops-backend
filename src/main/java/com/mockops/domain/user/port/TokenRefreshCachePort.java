@@ -1,4 +1,4 @@
-package com.mockops.domain.user.infrastructure;
+package com.mockops.domain.user.port;
 
 import com.mockops.presentation.api.user.dto.TokenResponse;
 

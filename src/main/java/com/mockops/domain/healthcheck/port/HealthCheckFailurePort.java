@@ -1,4 +1,4 @@
-package com.mockops.domain.healthcheck.infrastructure;
+package com.mockops.domain.healthcheck.port;
 
 /**
  * 헬스 체크 실패 카운트 관리 포트

@@ -2,7 +2,7 @@ package com.mockops.domain.project.event;
 
 import com.mockops.domain.notification.entity.NotificationType;
 import com.mockops.domain.notification.service.NotificationService;
-import com.mockops.domain.project.infrastructure.MailServicePort;
+import com.mockops.domain.project.port.MailServicePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

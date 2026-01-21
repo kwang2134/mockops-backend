@@ -3,7 +3,7 @@ package com.mockops.domain.user.service;
 import com.mockops.domain.user.entity.AuthProvider;
 import com.mockops.domain.user.entity.ProviderType;
 import com.mockops.domain.user.entity.User;
-import com.mockops.domain.user.infrastructure.TokenRefreshCachePort;
+import com.mockops.domain.user.port.TokenRefreshCachePort;
 import com.mockops.domain.user.repository.AuthProviderRepository;
 import com.mockops.domain.user.repository.UserAgreementRepository;
 import com.mockops.domain.user.repository.UserRepository;

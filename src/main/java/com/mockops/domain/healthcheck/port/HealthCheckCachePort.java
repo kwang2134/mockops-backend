@@ -1,4 +1,4 @@
-package com.mockops.domain.healthcheck.infrastructure;
+package com.mockops.domain.healthcheck.port;
 
 import java.util.Set;
 

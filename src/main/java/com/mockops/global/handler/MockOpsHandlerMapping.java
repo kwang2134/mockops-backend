@@ -3,7 +3,7 @@ package com.mockops.global.handler;
 import com.mockops.domain.mock.dto.MockCacheDto;
 import com.mockops.domain.mock.entity.HttpMethod;
 import com.mockops.domain.mock.entity.MockApi;
-import com.mockops.domain.mock.infrastructure.MockApiCachePort;
+import com.mockops.domain.mock.port.MockApiCachePort;
 import com.mockops.domain.mock.repository.MockApiRepository;
 import com.mockops.domain.mock.service.DomainServerService;
 import jakarta.servlet.http.HttpServletRequest;

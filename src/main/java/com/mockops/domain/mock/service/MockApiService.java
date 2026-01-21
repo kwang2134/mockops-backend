@@ -4,7 +4,7 @@ import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.HttpMethod;
 import com.mockops.domain.mock.entity.MockApi;
 import com.mockops.domain.mock.event.BulkCreationEvent;
-import com.mockops.domain.mock.infrastructure.MockApiCachePort;
+import com.mockops.domain.mock.port.MockApiCachePort;
 import com.mockops.domain.mock.repository.MockApiRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.domain.project.service.ProjectMemberService;

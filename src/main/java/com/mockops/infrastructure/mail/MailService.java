@@ -1,6 +1,6 @@
 package com.mockops.infrastructure.mail;
 
-import com.mockops.domain.project.infrastructure.MailServicePort;
+import com.mockops.domain.project.port.MailServicePort;
 import com.mockops.global.exception.ErrorCode;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

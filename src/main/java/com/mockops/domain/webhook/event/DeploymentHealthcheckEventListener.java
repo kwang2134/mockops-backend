@@ -1,6 +1,6 @@
 package com.mockops.domain.webhook.event;
 
-import com.mockops.domain.webhook.infrastructure.DeployHealthCheckJobPort;
+import com.mockops.domain.webhook.port.DeployHealthCheckJobPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
