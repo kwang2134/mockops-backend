@@ -1,8 +1,8 @@
 package com.mockops.domain.healthcheck.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mockops.domain.healthcheck.infrastructure.HealthCheckCachePort;
-import com.mockops.domain.healthcheck.infrastructure.HealthCheckFailurePort;
+import com.mockops.domain.healthcheck.port.HealthCheckCachePort;
+import com.mockops.domain.healthcheck.port.HealthCheckFailurePort;
 import com.mockops.domain.healthcheck.util.HealthCheckJobParser;
 import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.entity.ServerStatus;
@@ -601,8 +601,9 @@ public class HealthCheckService {
                     .orElseThrow(() -> ErrorCode.DOMAIN_SERVER_NOT_FOUND
                             .domainException("도메인 서버가 존재하지 않습니다. serverId=" + job.serverId()));
 
-            // 1. 서버 상태 업데이트 (ERROR)
+            // 1. 서버 상태 업데이트 (ERROR) 및 헬스 체크 비활성화
             domainServer.updateStatus(ServerStatus.ERROR);
+            domainServer.updateHealthCheckActive(false);
             log.error("도메인 서버 배포 실패 (헬스 체크 5회 초과): serverId={}", domainServer.getId());
 
             // 2. 실패 알림 발송 (Slack)

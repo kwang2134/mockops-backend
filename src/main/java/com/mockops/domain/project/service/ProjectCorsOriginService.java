@@ -1,7 +1,7 @@
 package com.mockops.domain.project.service;
 
 import com.mockops.domain.project.entity.ProjectCorsOrigin;
-import com.mockops.domain.project.infrastructure.CorsOriginCachePort;
+import com.mockops.domain.project.port.CorsOriginCachePort;
 import com.mockops.domain.project.repository.ProjectCorsOriginRepository;
 import com.mockops.domain.project.role.MemberRole;
 import com.mockops.global.exception.ErrorCode;

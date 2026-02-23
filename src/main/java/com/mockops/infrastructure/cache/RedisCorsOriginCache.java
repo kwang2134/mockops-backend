@@ -1,6 +1,6 @@
 package com.mockops.infrastructure.cache;
 
-import com.mockops.domain.project.infrastructure.CorsOriginCachePort;
+import com.mockops.domain.project.port.CorsOriginCachePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

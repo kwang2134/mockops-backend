@@ -1,8 +1,8 @@
 package com.mockops.infrastructure.deploy;
 
 import com.mockops.domain.healthcheck.service.HealthCheckService;
-import com.mockops.domain.webhook.infrastructure.DeployHealthCheckJobPort;
 import com.mockops.domain.webhook.model.DeployHealthCheckJob;
+import com.mockops.domain.webhook.port.DeployHealthCheckJobPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

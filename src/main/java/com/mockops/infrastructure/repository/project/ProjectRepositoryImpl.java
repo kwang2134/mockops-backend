@@ -24,18 +24,24 @@ public class ProjectRepositoryImpl implements ProjectRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Project> searchProjects(String name, String ownerNickname, Pageable pageable) {
+    public Page<Project> searchProjects(List<Long> projectIds, String name, String ownerNickname, Pageable pageable) {
         QProject project = QProject.project;
         QUser user = QUser.user;
 
         BooleanBuilder builder = new BooleanBuilder();
+
+        // 유저가 참여중인 프로젝트 목록만 필터링
+        if (projectIds == null || projectIds.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+        builder.and(project.id.in(projectIds));
 
         // 프로젝트 제목 검색 (부분 일치)
         if (name != null && !name.isBlank()) {
             builder.and(project.name.containsIgnoreCase(name));
         }
 
-        // 오너 ID 검색 (정확히 일치)
+        // 오너 닉네임 검색 (부분 일치)
         if (ownerNickname != null && !ownerNickname.isBlank()) {
             builder.and(user.nickname.containsIgnoreCase(ownerNickname));
         }

@@ -95,9 +95,17 @@ public class ProjectService {
      * 프로젝트 검색 (제목, 오너 ID)
      * 권한: 인증된 사용자
      */
-    public ProjectPageResponse searchProjects(String name, String ownerNickname, Pageable pageable) {
+    public ProjectPageResponse searchProjects(Long userId, String name, String ownerNickname, Pageable pageable) {
+        // 사용자가 속한 프로젝트 멤버 목록 조회
+        List<ProjectMember> myMemberships = projectMemberRepository.findByUserId(userId);
+
+        // 프로젝트 ID 목록 추출
+        List<Long> projectIds = myMemberships.stream()
+                .map(ProjectMember::getProjectId)
+                .toList();
+
         // QueryDSL을 사용한 동적 검색
-        Page<Project> projectPage = projectRepository.searchProjects(name, ownerNickname, pageable);
+        Page<Project> projectPage = projectRepository.searchProjects(projectIds, name, ownerNickname, pageable);
 
         // DTO 변환
         List<ProjectResponse> projectResponses = projectPage.getContent().stream()

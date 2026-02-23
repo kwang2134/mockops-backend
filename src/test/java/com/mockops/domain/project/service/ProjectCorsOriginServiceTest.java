@@ -31,7 +31,7 @@ class ProjectCorsOriginServiceTest {
     private ProjectMemberService projectMemberService;
 
     @Mock
-    private com.mockops.domain.project.infrastructure.CorsOriginCachePort corsOriginCachePort;
+    private com.mockops.domain.project.port.CorsOriginCachePort corsOriginCachePort;
 
     @InjectMocks
     private ProjectCorsOriginService projectCorsOriginService;

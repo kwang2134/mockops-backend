@@ -80,6 +80,9 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 # JWT Secret Key (프로덕션 - 환경변수, 최소 256비트 이상 필수)
 jwt:
@@ -123,4 +126,7 @@ management:
     web:
       exposure:
         include: health,info,prometheus
-
+  health:
+    # 메일 서버 헬스 체크 비활성화
+    mail:
+      enabled: false

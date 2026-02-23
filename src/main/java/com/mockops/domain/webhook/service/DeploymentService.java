@@ -2,7 +2,7 @@ package com.mockops.domain.webhook.service;
 
 import com.mockops.domain.mock.entity.DomainServer;
 import com.mockops.domain.mock.service.DomainServerService;
-import com.mockops.domain.webhook.infrastructure.DeployHealthCheckJobPort;
+import com.mockops.domain.webhook.port.DeployHealthCheckJobPort;
 import com.mockops.global.exception.ErrorCode;
 import com.mockops.presentation.api.webhook.dto.DeploymentRequest;
 import lombok.RequiredArgsConstructor;

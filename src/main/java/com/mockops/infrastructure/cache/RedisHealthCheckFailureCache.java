@@ -1,6 +1,6 @@
 package com.mockops.infrastructure.cache;
 
-import com.mockops.domain.healthcheck.infrastructure.HealthCheckFailurePort;
+import com.mockops.domain.healthcheck.port.HealthCheckFailurePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

@@ -1,4 +1,4 @@
-package com.mockops.domain.project.infrastructure;
+package com.mockops.domain.project.port;
 
 import java.util.Map;
 

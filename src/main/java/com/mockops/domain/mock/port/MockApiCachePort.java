@@ -1,4 +1,4 @@
-package com.mockops.domain.mock.infrastructure;
+package com.mockops.domain.mock.port;
 
 import com.mockops.domain.mock.dto.MockCacheDto;
 import com.mockops.domain.mock.entity.HttpMethod;

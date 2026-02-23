@@ -1,4 +1,4 @@
-package com.mockops.domain.webhook.infrastructure;
+package com.mockops.domain.webhook.port;
 
 import com.mockops.domain.webhook.model.DeployHealthCheckJob;
 
