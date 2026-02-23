@@ -64,7 +64,7 @@ public class AuthController implements AuthDocs {
         authService.logout(userId);
 
         // RefreshToken 쿠키 삭제
-        cookieUtils.clearRefreshTokenCookie(response);
+        cookieUtils.clearRefreshTokenCookie(response, isSecure);
 
         return ResponseEntity.noContent().build();
     }

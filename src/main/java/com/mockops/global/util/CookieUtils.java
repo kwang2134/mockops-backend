@@ -4,6 +4,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -20,6 +22,12 @@ public class CookieUtils {
     public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
     private static final int REFRESH_TOKEN_MAX_AGE = 14 * 24 * 60 * 60; // 14일 (초 단위)
 
+    @Value("${server.servlet.session.cookie.domain:}")
+    private String cookieDomain;
+
+    @Value("${server.servlet.session.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
     /**
      * RefreshToken을 HttpOnly, Secure 쿠키로 설정
      *
@@ -28,12 +36,20 @@ public class CookieUtils {
      * @param isSecure     Secure 플래그 (HTTPS 환경에서만 true)
      */
     public void setRefreshTokenCookie(HttpServletResponse response, String refreshToken, boolean isSecure) {
-        Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(isSecure);
-        cookie.setPath("/");
-        cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
-        response.addCookie(cookie);
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
+                .httpOnly(true)
+                .secure(isSecure)
+                .path("/")
+                .maxAge(REFRESH_TOKEN_MAX_AGE);
+
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+        if (cookieSameSite != null && !cookieSameSite.isBlank()) {
+            builder.sameSite(cookieSameSite);
+        }
+
+        response.addHeader("Set-Cookie", builder.build().toString());
 
         log.debug("RefreshToken 쿠키 설정 완료 (Secure={})", isSecure);
     }
@@ -60,13 +76,21 @@ public class CookieUtils {
      *
      * @param response HttpServletResponse
      */
-    public void clearRefreshTokenCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // 즉시 삭제
-        response.addCookie(cookie);
+    public void clearRefreshTokenCookie(HttpServletResponse response, boolean isSecure) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(isSecure)
+                .path("/")
+                .maxAge(0);
+
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+        if (cookieSameSite != null && !cookieSameSite.isBlank()) {
+            builder.sameSite(cookieSameSite);
+        }
+
+        response.addHeader("Set-Cookie", builder.build().toString());
 
         log.debug("RefreshToken 쿠키 삭제 완료");
     }
