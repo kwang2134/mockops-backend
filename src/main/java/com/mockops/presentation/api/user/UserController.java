@@ -32,7 +32,7 @@ public class UserController implements UserDocs {
     private final InvitationService invitationService;
     private final CookieUtils cookieUtils;
 
-    @Value("${server.ssl.enabled:false}")
+    @Value("${server.servlet.session.cookie.secure:false}")
     private boolean isSecure;
 
     @Override
