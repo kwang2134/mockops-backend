@@ -25,7 +25,7 @@ public class AuthController implements AuthDocs {
     private final AuthService authService;
     private final CookieUtils cookieUtils;
 
-    @Value("${server.ssl.enabled:false}")
+    @Value("${server.servlet.session.cookie.secure:false}")
     private boolean isSecure;
 
     /**
