@@ -42,8 +42,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final UserAgreementRepository userAgreementRepository;
     private final LegalProperties legalProperties;
 
-    @Value("${server.ssl.enabled:false}")
+    @Value("${server.servlet.session.cookie.secure:false}")
     private boolean isSecure;
+
+    @Value("${server.servlet.session.cookie.domain:}")
+    private String cookieDomain;
 
     // TODO: 프론트엔드 리다이렉트 URL을 application.yml에 설정
     @Value("${oauth2.redirect-url:http://localhost:3000/oauth2/callback}")
@@ -89,7 +92,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         log.info("RefreshToken 저장 완료: userId={}, providerCount={}", userId, authProviders.size());
 
         // RefreshToken을 HttpOnly 쿠키로 설정
-        cookieUtils.setRefreshTokenCookie(response, refreshToken, isSecure);
+        cookieUtils.setRefreshTokenCookie(response, refreshToken, isSecure, cookieDomain);
 
         // 약관 동의 상태 확인
         List<UserAgreement> agreements = userAgreementRepository.findByUserIdOrderByAgreedAtDesc(userId);

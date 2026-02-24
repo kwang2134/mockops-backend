@@ -10,7 +10,7 @@ server:
       cookie:
         same-site: none
         secure: true
-        domain: mockops.cloud
+        domain: .mockops.cloud
 
 spring:
   # 데이터베이스 설정 (프로덕션 - 환경변수)

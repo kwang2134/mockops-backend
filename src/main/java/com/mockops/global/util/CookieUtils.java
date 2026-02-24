@@ -27,12 +27,17 @@ public class CookieUtils {
      * @param refreshToken RefreshToken 값
      * @param isSecure     Secure 플래그 (HTTPS 환경에서만 true)
      */
-    public void setRefreshTokenCookie(HttpServletResponse response, String refreshToken, boolean isSecure) {
+    public void setRefreshTokenCookie(HttpServletResponse response, String refreshToken, boolean isSecure, String cookieDomain) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(isSecure);
         cookie.setPath("/");
         cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
+
+        if(cookieDomain != null && !cookieDomain.isBlank()) {
+            cookie.setDomain(cookieDomain);
+        }
+
         response.addCookie(cookie);
 
         log.debug("RefreshToken 쿠키 설정 완료 (Secure={})", isSecure);
@@ -60,12 +65,17 @@ public class CookieUtils {
      *
      * @param response HttpServletResponse
      */
-    public void clearRefreshTokenCookie(HttpServletResponse response) {
+    public void clearRefreshTokenCookie(HttpServletResponse response, boolean isSecure, String cookieDomain) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(isSecure);
         cookie.setPath("/");
         cookie.setMaxAge(0); // 즉시 삭제
+
+        if(cookieDomain != null && !cookieDomain.isBlank()) {
+            cookie.setDomain(cookieDomain);
+        }
+
         response.addCookie(cookie);
 
         log.debug("RefreshToken 쿠키 삭제 완료");

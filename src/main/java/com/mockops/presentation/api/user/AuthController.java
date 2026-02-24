@@ -25,8 +25,11 @@ public class AuthController implements AuthDocs {
     private final AuthService authService;
     private final CookieUtils cookieUtils;
 
-    @Value("${server.ssl.enabled:false}")
+    @Value("${server.servlet.session.cookie.secure:false}")
     private boolean isSecure;
+
+    @Value("${server.servlet.session.cookie.domain:}")
+    private String cookieDomain;
 
     /**
      * Access Token 갱신
@@ -44,7 +47,7 @@ public class AuthController implements AuthDocs {
         TokenResponse tokenResponse = authService.refreshAccessToken(refreshToken);
 
         // 새로운 RefreshToken을 HttpOnly Cookie로 설정 (Token Rotation)
-        cookieUtils.setRefreshTokenCookie(response, tokenResponse.refreshToken(), isSecure);
+        cookieUtils.setRefreshTokenCookie(response, tokenResponse.refreshToken(), isSecure, cookieDomain);
 
         // 응답 Body에는 Access Token만 포함
         return ResponseEntity.ok(UnifiedResponse.success(
@@ -64,7 +67,7 @@ public class AuthController implements AuthDocs {
         authService.logout(userId);
 
         // RefreshToken 쿠키 삭제
-        cookieUtils.clearRefreshTokenCookie(response);
+        cookieUtils.clearRefreshTokenCookie(response, isSecure, cookieDomain);
 
         return ResponseEntity.noContent().build();
     }
