@@ -87,11 +87,6 @@ spring:
 # JWT Secret Key (프로덕션 - 환경변수, 최소 256비트 이상 필수)
 jwt:
   secret: ${JWT_SECRET}
-  # 테스트
-  access-token-expiration: 1m    # Access Token: 30분
-  refresh-token-expiration: 14d   # Refresh Token: 2주
-  invitation-token-expiration: 7d # 초대 토큰: 7일
-  webhook-token-expiration: 30d   # Webhook 토큰: 30일
 
 # OAuth2 리다이렉트 URL (프로덕션 - 환경변수)
 oauth2:
